@@ -105,9 +105,14 @@ const HACK_LINES = [
   <span class="t-yellow">coffee</span>      <span class="t-dim">→</span> Brew a virtual coffee
   <span class="t-yellow">flip</span>        <span class="t-dim">→</span> Flip a table
   <span class="t-yellow">sudo hire</span>   <span class="t-dim">→</span> 😏
-  <span class="t-yellow">neofetch</span>    <span class="t-dim">→</span> System info
-  <span class="t-yellow">time</span>        <span class="t-dim">→</span> Current time
-  <span class="t-yellow">history</span>     <span class="t-dim">→</span> Command history
+ <span class="t-dim">─────────────────────────────────────────</span>
+ <span class="t-dim">System & CI/CD:</span>
+ <span class="t-dim">─────────────────────────────────────────</span>
+  <span class="t-purple">status</span>      <span class="t-dim">→</span> View server health & latency
+  <span class="t-purple">commits</span>     <span class="t-dim">→</span> View live GitHub deployments
+  <span class="t-purple">neofetch</span>    <span class="t-dim">→</span> System info
+  <span class="t-purple">history</span>     <span class="t-dim">→</span> Command history
+  <span class="t-purple">time</span>        <span class="t-dim">→</span> Current time
  <span class="t-dim">─────────────────────────────────────────</span>`;
 
 const ABOUT_TEXT = ` Hi, my name is <span class="t-white font-bold">Rakesh Sarkar</span>!
@@ -468,6 +473,47 @@ const ContactSection = () => {
         } else {
           addLine({ type: 'output', text: ` <span class="t-green">✓ Vote successfully cast! Type 'polls' to see updated results.</span>` });
         }
+      });
+      return;
+    }
+
+    if (lo === 'commits' || lo === 'git log') {
+      addLine({ type: 'output', text: ` <span class="t-dim">Fetching latest commits from bloodwraith8851/Dino-s-Portfolio...</span>` });
+      fetch('https://api.github.com/repos/bloodwraith8851/Dino-s-Portfolio/commits?per_page=5')
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data)) throw new Error('API Rate Limited');
+          const commitLines = data.map((c: any) => {
+            const hash = c.sha.substring(0, 7);
+            const msg = c.commit.message.split('\\n')[0].substring(0, 60);
+            const date = new Date(c.commit.author.date).toLocaleDateString();
+            return { type: 'output' as const, text: ` <span class="t-red">${hash}</span> <span class="t-dim">${date}</span> <span class="t-white">${msg}</span> <span class="t-cyan">&lt;${c.commit.author.name}&gt;</span>` };
+          });
+          addLine({ type: 'output', text: `\n <span class="t-green font-bold">--- RECENT DEPLOYMENTS ---</span>\n` });
+          addLines(commitLines, 100);
+        })
+        .catch(e => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch commits. GitHub API might be rate-limited.</span>` }));
+      return;
+    }
+
+    if (lo === 'status') {
+      addLine({ type: 'output', text: ` <span class="t-dim">Running system diagnostics...</span>` });
+      const start = Date.now();
+      fetch('https://api.github.com/repos/bloodwraith8851/Dino-s-Portfolio/commits?per_page=1').then(() => {
+        const ping = Date.now() - start;
+        const statusText = `
+ <span class="t-purple font-bold">--- SERVER HEALTH ---</span>
+ <span class="t-dim">─────────────────────────────────────────</span>
+  <span class="t-yellow">Portfolio Build:</span>   <span class="t-green">v2.0.26 (STABLE)</span>
+  <span class="t-yellow">Supabase DB:</span>       <span class="t-green">ONLINE</span>
+  <span class="t-yellow">Presence Node:</span>     <span class="t-green">CONNECTED</span>
+  <span class="t-yellow">GitHub API Ping:</span>   <span class="t-white">${ping}ms</span>
+  <span class="t-yellow">Uptime:</span>            <span class="t-white">${Math.floor(performance.now() / 60000)} minutes</span>
+ <span class="t-dim">─────────────────────────────────────────</span>
+ <span class="t-dim">Type '</span><span class="t-cyan">commits</span><span class="t-dim">' to see latest deployment history.</span>`;
+        addLine({ type: 'output', text: statusText });
+      }).catch(() => {
+        addLine({ type: 'output', text: ` <span class="t-red">✗ Diagnostics failed. Partial outage detected.</span>` });
       });
       return;
     }
