@@ -134,7 +134,9 @@ const ABOUT_TEXT = ` Hi, my name is <span class="t-white font-bold">Rakesh Sarka
  building scalable web applications to solve real-world problems.
 
  Currently pursuing <span class="t-cyan">B.Tech AI</span> @ <span class="t-cyan">IIT Bombay</span>
- <span class="t-green">● Available for work</span>`;
+ <span class="t-green">● Available for work</span>
+ 
+ <span class="t-dim">To contact Rakesh, type '</span><span class="t-yellow font-bold bg-white/10 px-1 rounded">hire me</span><span class="t-dim">' in the terminal.</span>`;
 
 const CONTACT_TEXT = ` <span class="t-yellow">📧  Email</span>      <span class="t-dim">→</span> <a href="mailto:rakeshsarkar9711@gmail.com" class="t-link">rakeshsarkar9711@gmail.com</a>
  <span class="t-yellow">📱  WhatsApp</span>   <span class="t-dim">→</span> <a href="https://wa.me/918851624488" target="_blank" class="t-link">+91 8851624488</a>
@@ -604,7 +606,7 @@ const ContactSection = () => {
       case 'contact': addLine({ type: 'output', text: CONTACT_TEXT }); break;
       case 'social':  addLine({ type: 'output', text: SOCIAL_TEXT }); break;
       case 'skills':  addLine({ type: 'output', text: SKILLS_TEXT }); break;
-      case 'hire':    addLine({ type: 'output', text: ` Let's get in touch, ${visitorName}! 🤝\n Enter your <span class="t-yellow">email</span>:` }); setHD({ name: visitorName, email: '', msg: '' }); setHire('email'); break;
+      case 'hire': case 'hire me':    addLine({ type: 'output', text: ` Let's get in touch, ${visitorName}! 🤝\n Enter your <span class="t-yellow">email</span>:` }); setHD({ name: visitorName, email: '', msg: '' }); setHire('email'); break;
       case 'clear':   setLines([]); setIsTailingLogs(false); setIsWatching(false); return;
       case 'watch':
         if (!isAdmin) { addLine({ type: 'output', text: ` <span class="t-red">✗ Permission denied.</span>` }); break; }
