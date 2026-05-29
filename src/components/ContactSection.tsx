@@ -792,30 +792,30 @@ const ContactSection = () => {
       }
       case 'users': case 'connections': {
         if (!isAdmin) { addLine({ type: 'output', text: ` <span class="t-red">✗ Permission denied.</span>` }); break; }
-        
         addLine({ type: 'output', text: ` <span class="t-dim">Scanning active network connections...</span>` });
         
-        try {
-          const res = await fetch('https://ipapi.co/json/');
-          const data = await res.json();
-          const ip = data.ip || '127.0.0.1';
-          const city = data.city || 'Unknown';
-          const org = data.org ? data.org.substring(0, 15) : 'ISP';
-          const activeCount = window.__ACTIVE_VISITORS__ || 1;
-          
-          addLine({ type: 'output', text: `
- <span class="t-dim">ACTIVE CONNECTIONS: ${activeCount}</span>
- <span class="t-dim">─────────────────────────────────────────────────────────</span>
-  <span class="t-green">root</span>       ${ip.padEnd(16)} (${city})    <span class="t-dim">${org}</span>
- <span class="t-dim">─────────────────────────────────────────────────────────</span>` });
-        } catch (e) {
-          const activeCount = window.__ACTIVE_VISITORS__ || 1;
-          addLine({ type: 'output', text: `
- <span class="t-dim">ACTIVE CONNECTIONS: ${activeCount}</span>
- <span class="t-dim">─────────────────────────────────────────────────────────</span>
-  <span class="t-green">root</span>       127.0.0.1        (local)       <span class="t-dim">Localhost</span>
- <span class="t-dim">─────────────────────────────────────────────────────────</span>` });
+        const presences = window.__VISITOR_PRESENCE__ || [];
+        const activeCount = Math.max(presences.length, 1);
+        
+        let usersList = '';
+        if (presences.length > 0) {
+          usersList = presences.map(p => {
+            const isRoot = p.alias === 'root' || (visitorName && p.alias === visitorName);
+            const displayIp = p.ip || '127.0.0.1';
+            const displayCity = p.city || 'Unknown';
+            const displayOrg = p.org || 'ISP';
+            const cityStr = `(${displayCity})`;
+            return `  <span class="t-${isRoot ? 'green' : 'dim'} font-bold">${sanitizeHTML(p.alias).padEnd(12)}</span> ${displayIp.padEnd(16)} ${cityStr.padEnd(14)} <span class="t-dim">${displayOrg}</span>`;
+          }).join('\n');
+        } else {
+           usersList = `  <span class="t-green font-bold">root        </span> 127.0.0.1        (local     ) <span class="t-dim">Localhost</span>`;
         }
+        
+        addLine({ type: 'output', text: `
+ <span class="t-dim">ACTIVE CONNECTIONS: ${activeCount}</span>
+ <span class="t-dim">─────────────────────────────────────────────────────────</span>
+${usersList}
+ <span class="t-dim">─────────────────────────────────────────────────────────</span>` });
         break;
       }
       case 'config': {

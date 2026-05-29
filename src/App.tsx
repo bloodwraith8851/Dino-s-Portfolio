@@ -56,21 +56,38 @@ const App = () => {
         if (status === 'SUBSCRIBED') {
           const stored = localStorage.getItem('visitorName');
           let alias = stored || 'Anonymous Node';
-          if (!stored) {
+          let ip = 'Unknown'; let city = 'Unknown'; let org = 'ISP';
+          try {
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            if (ipData.ip) ip = ipData.ip;
+            
             try {
-              const res = await fetch('https://ipapi.co/json/');
-              const data = await res.json();
-              if (data.city) alias = `${data.city} Visitor`;
-            } catch(e) {}
-          }
-          await channel.track({ alias, online_at: new Date().toISOString() });
+              const geoRes = await fetch(`https://ipinfo.io/${ip}/json`);
+              const geoData = await geoRes.json();
+              if (geoData.city) city = geoData.city;
+              if (geoData.org) org = geoData.org.replace(/^AS\d+\s/, '').substring(0, 15);
+            } catch(e) {
+              try {
+                const geoRes2 = await fetch(`https://ipapi.co/${ip}/json/`);
+                const geoData2 = await geoRes2.json();
+                if (geoData2.city) city = geoData2.city;
+                if (geoData2.org) org = geoData2.org.substring(0, 15);
+              } catch(err) {}
+            }
+            
+            (window as any).__GEO_DATA__ = { ip, city, org };
+            if (!stored && city !== 'Unknown') alias = `${city} Visitor`;
+          } catch(e) {}
+          await channel.track({ alias, online_at: new Date().toISOString(), ip, city, org });
         }
       });
 
     // Listen for identity updates from the terminal
     const handleIdentity = async (e: any) => {
       if (channel.state === 'joined') {
-        await channel.track({ alias: e.detail, online_at: new Date().toISOString() });
+        const geo = (window as any).__GEO_DATA__ || { ip: 'Unknown', city: 'Unknown', org: 'ISP' };
+        await channel.track({ alias: e.detail, online_at: new Date().toISOString(), ip: geo.ip, city: geo.city, org: geo.org });
       }
     };
     window.addEventListener('identity_updated', handleIdentity);
