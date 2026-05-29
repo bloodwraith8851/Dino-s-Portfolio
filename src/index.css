@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  background: #0c0c0c;
+  font-family: 'Kanit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  color: #d7e2ea;
+  overflow-x: hidden;
+}
+
+.hero-heading {
+  background: linear-gradient(180deg, #646973 0%, #bbccd7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Subtle scrollbar that matches the dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #0c0c0c;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f1f24;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2a30;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Contact section animations */
+@keyframes marqueeScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes formShake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-10px); }
+  40%     { transform: translateX(10px); }
+  60%     { transform: translateX(-8px); }
+  80%     { transform: translateX(6px); }
+}
+
+.shake { animation: formShake 0.45s ease; }
+
+/* Terminal colors */
+.t-green  { color: #7ee787; }
+.t-yellow { color: #e3b341; }
+.t-red    { color: #f47067; }
+.t-white  { color: #e6edf3; }
+.t-purple { color: #d2a8ff; }
+.t-cyan   { color: #79c0ff; }
+.t-dim    { color: #484f58; }
+.t-body   { color: #c9d1d9; }
+.t-output { color: #8b949e; }
+.t-link   { color: #58a6ff; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(88,166,255,0.3); transition: all 0.2s; }
+.t-link:hover { color: #a5d6ff; text-decoration-color: rgba(165,214,255,0.6); }
+.t-ascii  { color: #7ee787; font-size: 9px; line-height: 1.15; opacity: 0.85; text-shadow: 0 0 12px rgba(126,231,135,0.25); }
+@media (min-width: 640px) { .t-ascii { font-size: 12px; } }
+
