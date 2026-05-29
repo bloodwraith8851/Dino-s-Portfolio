@@ -121,10 +121,12 @@ const HELP_SYSTEM = `
 const HELP_FUN = `
  <span class="t-dim">Easter eggs — try these for fun:</span>
  <span class="t-dim">─────────────────────────────────────────</span>
+  <span class="t-yellow">weather</span>     <span class="t-dim">→</span> Current weather forecast
   <span class="t-yellow">joke</span>        <span class="t-dim">→</span> Random dev joke
-  <span class="t-yellow">fortune</span>     <span class="t-dim">→</span> Developer fortune cookie
-  <span class="t-yellow">matrix</span>      <span class="t-dim">→</span> Enter the Matrix
+  <span class="t-yellow">quote</span>       <span class="t-dim">→</span> Inspirational quote
+  <span class="t-yellow">pokemon</span>     <span class="t-dim">→</span> Catch a random Pokemon
   <span class="t-yellow">hack</span>        <span class="t-dim">→</span> <span class="t-red">⚠ CLASSIFIED</span>
+  <span class="t-yellow">matrix</span>      <span class="t-dim">→</span> Enter the Matrix
   <span class="t-yellow">coffee</span>      <span class="t-dim">→</span> Brew a virtual coffee
   <span class="t-yellow">flip</span>        <span class="t-dim">→</span> Flip a table
   <span class="t-yellow">sudo hire</span>   <span class="t-dim">→</span> 😏
@@ -944,9 +946,89 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
       case 'sudo rm -rf /': case 'sudo rm -rf':
         addLine({ type: 'output', text: ` <span class="t-red">⚠ Nice try!</span> <span class="t-dim">This portfolio has plot armor.</span> 🛡️` }); break;
       case 'hack': {
-        const hackLines: Line[] = HACK_LINES.map(h => ({ type: 'output' as const, text: ` <span class="t-red">⚠</span> ${h}` }));
-        hackLines.push({ type: 'output', text: `\n <span class="t-red">ACCESS DENIED</span> — Just kidding 😄\n <span class="t-dim">But you can legitimately access me via</span> '<span class="t-green">contact</span>'` });
-        addLines(hackLines, 350);
+        const geo = (window as any).__GEO_DATA__ || { ip: '127.0.0.1', city: 'Unknown', org: 'ISP' };
+        const agent = navigator.userAgent;
+        let os = 'Unknown OS';
+        if (agent.includes('Win')) os = 'Windows';
+        else if (agent.includes('Mac')) os = 'macOS';
+        else if (agent.includes('Linux')) os = 'Linux';
+        else if (agent.includes('Android')) os = 'Android';
+        else if (agent.includes('like Mac OS')) os = 'iOS';
+
+        const cores = navigator.hardwareConcurrency || 'unknown';
+        const ram = (navigator as any).deviceMemory || 'unknown';
+        const res = `${window.screen.width}x${window.screen.height}`;
+
+        const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+        // Use an IIFE so we can use async/await within the switch case without making the whole exec function async
+        (async () => {
+          addLine({ type: 'output', text: ` <span class="t-red font-bold animate-pulse">[!] CRITICAL: UNAUTHORIZED INGRESS DETECTED [!]</span>` });
+          await sleep(1500);
+
+          addLine({ type: 'output', text: ` <span class="t-dim">[*] Tracing origin...</span>` });
+          await sleep(2000);
+          addLine({ type: 'output', text: ` <span class="t-dim">[*] Target locked:</span> <span class="t-cyan font-bold">${geo.ip}</span> <span class="t-dim">(${geo.city} via ${geo.org})</span>` });
+          await sleep(1200);
+
+          addLine({ type: 'output', text: ` <span class="t-dim">[*] Fingerprinting host...</span>` });
+          await sleep(1800);
+          addLine({ type: 'output', text: ` <span class="t-yellow">[*] SYSTEM IDENTIFIED: ${os} | ${cores} CPU Cores | ${ram}GB RAM | ${res} Display</span>` });
+          await sleep(1500);
+
+          addLine({ type: 'output', text: ` <span class="t-dim">[*] Initializing CVE-2024-3094 exploit payload...</span>` });
+          await sleep(2500);
+          addLine({ type: 'output', text: ` <span class="t-dim">[*] Escaping browser sandbox...</span>` });
+          await sleep(3000);
+          addLine({ type: 'output', text: ` <span class="t-green font-bold">[*] ROOT PRIVILEGES OBTAINED. Kernel access granted.</span>` });
+          await sleep(1000);
+
+          addLine({ type: 'output', text: ` <span class="t-dim">[*] Deploying silent rootkit...</span>` });
+          await sleep(800);
+          addLine({ type: 'output', text: ` <span class="t-dim">[*] Extracting saved browser credentials, cookies, and crypto keys...</span>` });
+          await sleep(2200);
+          addLine({ type: 'output', text: ` <span class="t-yellow font-bold">[*] 142 CREDENTIALS COMPROMISED. 3 CRYPTO WALLETS LOCATED.</span>` });
+          await sleep(2000);
+
+          addLine({ type: 'output', text: ` <span class="t-red font-bold">[*] UPLOADING DATA TO COMMAND & CONTROL SERVER (104.22.18.99)...</span>` });
+          
+          // Fake progress bar
+          for (let p = 10; p <= 100; p += 15) {
+             await sleep(800);
+             addLine({ type: 'output', text: ` <span class="t-dim">    [${'#'.repeat(p/5)}${'.'.repeat(20 - (p/5))}] ${p}%</span>` });
+          }
+          await sleep(500);
+          addLine({ type: 'output', text: ` <span class="t-green font-bold">[*] EXFILTRATION COMPLETE.</span>` });
+          await sleep(2000);
+
+          addLine({ type: 'output', text: `\n <span class="t-yellow font-bold">[*] INITIATING AES-256 FILE SYSTEM ENCRYPTION...</span>\n` });
+          await sleep(1500);
+
+          const dirs = os === 'Windows' ? ['C:\\Users\\Admin\\Documents', 'C:\\Users\\Admin\\Pictures', 'C:\\Users\\Admin\\Desktop', 'C:\\Users\\Admin\\Downloads', 'C:\\Windows\\System32', 'C:\\Program Files\\Steam\\steamapps', 'C:\\Users\\Admin\\AppData\\Roaming'] : ['/home/user/Documents', '/home/user/Pictures', '/home/user/Desktop', '/home/user/Downloads', '/var/log', '/etc/ssh', '/home/user/.config'];
+          
+          // Fast encryption loop
+          const encLines: Line[] = [];
+          for (let i = 0; i < 250; i++) {
+            const dir = dirs[Math.floor(Math.random() * dirs.length)];
+            const ext = ['.jpg', '.pdf', '.docx', '.mp4', '.key', '.png', '.xlsx', '.zip', '.txt', '.csv', '.pem', '.sqlite'][Math.floor(Math.random() * 12)];
+            const filename = Math.random().toString(36).substring(2, 12);
+            encLines.push({ type: 'output', text: `  <span class="t-red font-mono">ENCRYPTING:</span> <span class="t-dim">${dir}${os === 'Windows' ? '\\' : '/'}${filename}${ext}</span> <span class="t-white">-></span> <span class="t-green font-mono">${filename}.LOCKED</span>` });
+          }
+          addLines(encLines, 30); // Super fast scrolling
+
+          // Wait for the scrolling to finish before showing the final threat
+          await sleep(250 * 30 + 1000); 
+
+          addLine({ type: 'output', text: `\n <span class="t-red text-2xl font-bold bg-red-900/30 border border-red-500 px-4 py-2 mt-4 inline-block animate-pulse w-full text-center">⚠ YOUR DEVICE HAS BEEN ENCRYPTED ⚠</span>` });
+          await sleep(1000);
+          addLine({ type: 'output', text: ` <span class="t-red font-bold text-lg mt-2 inline-block">All your files, photos, databases, and crypto wallets have been locked.</span>\n <span class="t-dim">Your IP (${geo.ip}) and physical location (${geo.city}) have been logged to our secure offshore servers.</span>` });
+          await sleep(1500);
+          addLine({ type: 'output', text: ` <span class="t-red font-bold text-xl mt-2 block animate-pulse">Transfer 0.5 BTC to 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa within 48 hours to receive the decryption key.</span>\n <span class="t-dim">If payment is not received, your private data will be leaked to the public internet.</span>\n` });
+          
+          await sleep(8000); // Let them sweat for a solid 8 seconds
+
+          addLine({ type: 'output', text: ` <span class="t-white text-xl">...okay, you can breathe now!</span> 😅\n <span class="t-dim">No files were actually touched. I just pulled your hardware specs (${cores} Cores / ${ram}GB RAM) and IP from standard browser APIs.</span>\n <span class="t-dim">If this ransomware simulation made you sweat, type '</span><span class="t-green">hire</span><span class="t-dim">'!</span>\n` });
+        })();
         break;
       }
       case 'time': case 'date':
@@ -957,6 +1039,50 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
         addLine({ type: 'output', text: ` <span class="t-cyan">about.md</span>  <span class="t-cyan">contact.md</span>  <span class="t-cyan">skills.json</span>  <span class="t-yellow">projects/</span>  <span class="t-yellow">secret/</span>  <span class="t-green">README.md</span>` }); break;
       case 'cat readme.md': case 'cat readme':
         addLine({ type: 'output', text: ` <span class="t-white font-bold"># Rakesh Sarkar</span>\n <span class="t-dim">Full-stack developer who writes code and breaks things (mostly on purpose).</span>\n <span class="t-green">★ Open to opportunities</span>` }); break;
+      case 'weather': {
+        const geo = (window as any).__GEO_DATA__;
+        if (!geo || !geo.city || geo.city === 'Unknown') {
+          addLine({ type: 'output', text: ` <span class="t-red">✗ Could not determine your location for weather data.</span>` });
+          break;
+        }
+        addLine({ type: 'output', text: ` <span class="t-dim">Fetching weather for ${geo.city}...</span>` });
+        fetch(`https://wttr.in/${geo.city}?format=3`)
+          .then(res => res.text())
+          .then(text => addLine({ type: 'output', text: ` <span class="t-cyan">${text.trim()}</span>` }))
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch weather.</span>` }));
+        break;
+      }
+      case 'joke': {
+        addLine({ type: 'output', text: ` <span class="t-dim">Fetching a joke...</span>` });
+        fetch('https://v2.jokeapi.dev/joke/Programming,Miscellaneous?blacklistFlags=nsfw,religious,political,racist,sexist,explicit&type=single')
+          .then(res => res.json())
+          .then(data => {
+            if (data.joke) addLine({ type: 'output', text: ` <span class="t-yellow">"${data.joke}"</span>` });
+            else addLine({ type: 'output', text: ` <span class="t-red">✗ No joke found.</span>` });
+          })
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch joke.</span>` }));
+        break;
+      }
+      case 'quote': {
+        addLine({ type: 'output', text: ` <span class="t-dim">Fetching an inspirational quote...</span>` });
+        fetch('https://api.quotable.io/random')
+          .then(res => res.json())
+          .then(data => addLine({ type: 'output', text: ` <span class="t-green">"${data.content}"</span>\n <span class="t-dim">— ${data.author}</span>` }))
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch quote.</span>` }));
+        break;
+      }
+      case 'pokemon': {
+        const id = Math.floor(Math.random() * 151) + 1;
+        addLine({ type: 'output', text: ` <span class="t-dim">Throwing a Pokeball...</span>` });
+        fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
+          .then(res => res.json())
+          .then(data => {
+            const types = data.types.map((t: any) => t.type.name).join(', ');
+            addLine({ type: 'output', text: ` <span class="t-red font-bold">Gotcha!</span> <span class="t-white">You caught a wild <span class="t-cyan font-bold capitalize">${data.name}</span>!</span>\n <span class="t-dim">Type: ${types} | Height: ${data.height/10}m | Weight: ${data.weight/10}kg</span>` });
+          })
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ The Pokemon broke free!</span>` }));
+        break;
+      }
       case 'cd secret': case 'cat secret':
         addLine({ type: 'output', text: ` <span class="t-red">🔒 Permission denied.</span> <span class="t-dim">Some secrets are meant to stay hidden...</span>\n <span class="t-dim">Hint: try '</span><span class="t-yellow">matrix</span><span class="t-dim">' instead.</span>` }); break;
       case 'pwd':
