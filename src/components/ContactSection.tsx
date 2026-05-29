@@ -73,8 +73,17 @@ const HACK_LINES = [
 ];
 
 /* ─── terminal data ──────────────────────────────────────────────── */
- const HELP_TEXT = `
- <span class="t-dim">Available commands:</span>
+const HELP_INDEX = `
+ <span class="t-dim">Help Menu Categories:</span>
+ <span class="t-dim">─────────────────────────────────────────</span>
+  <span class="t-cyan">1.</span> <span class="t-yellow">General & Contact</span>     <span class="t-dim">→</span> Basic commands & info
+  <span class="t-cyan">2.</span> <span class="t-yellow">Multiplayer & Chat</span>    <span class="t-dim">→</span> Games, chat, guestbook
+  <span class="t-cyan">3.</span> <span class="t-yellow">System & CI/CD</span>        <span class="t-dim">→</span> Diagnostics & logs
+  <span class="t-cyan">4.</span> <span class="t-yellow">Easter Eggs</span>           <span class="t-dim">→</span> Hidden secrets
+ <span class="t-dim">─────────────────────────────────────────</span>`;
+
+const HELP_GENERAL = `
+ <span class="t-dim">General & Contact:</span>
  <span class="t-dim">─────────────────────────────────────────</span>
   <span class="t-green">about</span>       <span class="t-dim">→</span> Who is Rakesh?
   <span class="t-green">contact</span>     <span class="t-dim">→</span> Show contact details
@@ -82,7 +91,9 @@ const HACK_LINES = [
   <span class="t-green">skills</span>      <span class="t-dim">→</span> Technical skills
   <span class="t-green">hire</span>        <span class="t-dim">→</span> Send a message
   <span class="t-green">clear</span>       <span class="t-dim">→</span> Clear terminal
- <span class="t-dim">─────────────────────────────────────────</span>
+ <span class="t-dim">─────────────────────────────────────────</span>`;
+
+const HELP_INTERACTIVE = `
  <span class="t-dim">Multiplayer & Interactive:</span>
  <span class="t-dim">─────────────────────────────────────────</span>
   <span class="t-cyan">snake</span>       <span class="t-dim">→</span> Play terminal Snake
@@ -95,7 +106,19 @@ const HACK_LINES = [
   <span class="t-cyan">guestbook</span>   <span class="t-dim">→</span> Read the public guestbook
   <span class="t-cyan">echo [txt]</span>  <span class="t-dim">→</span> Print text to the screen
   <span class="t-cyan">calc [num]</span>  <span class="t-dim">→</span> Mathematical calculator
+ <span class="t-dim">─────────────────────────────────────────</span>`;
+
+const HELP_SYSTEM = `
+ <span class="t-dim">System & CI/CD:</span>
  <span class="t-dim">─────────────────────────────────────────</span>
+  <span class="t-purple">status</span>      <span class="t-dim">→</span> View server health & latency
+  <span class="t-purple">commits</span>     <span class="t-dim">→</span> View live GitHub deployments
+  <span class="t-purple">neofetch</span>    <span class="t-dim">→</span> System info
+  <span class="t-purple">history</span>     <span class="t-dim">→</span> Command history
+  <span class="t-purple">time</span>        <span class="t-dim">→</span> Current time
+ <span class="t-dim">─────────────────────────────────────────</span>`;
+
+const HELP_FUN = `
  <span class="t-dim">Easter eggs — try these for fun:</span>
  <span class="t-dim">─────────────────────────────────────────</span>
   <span class="t-yellow">joke</span>        <span class="t-dim">→</span> Random dev joke
@@ -105,14 +128,6 @@ const HACK_LINES = [
   <span class="t-yellow">coffee</span>      <span class="t-dim">→</span> Brew a virtual coffee
   <span class="t-yellow">flip</span>        <span class="t-dim">→</span> Flip a table
   <span class="t-yellow">sudo hire</span>   <span class="t-dim">→</span> 😏
- <span class="t-dim">─────────────────────────────────────────</span>
- <span class="t-dim">System & CI/CD:</span>
- <span class="t-dim">─────────────────────────────────────────</span>
-  <span class="t-purple">status</span>      <span class="t-dim">→</span> View server health & latency
-  <span class="t-purple">commits</span>     <span class="t-dim">→</span> View live GitHub deployments
-  <span class="t-purple">neofetch</span>    <span class="t-dim">→</span> System info
-  <span class="t-purple">history</span>     <span class="t-dim">→</span> Command history
-  <span class="t-purple">time</span>        <span class="t-dim">→</span> Current time
  <span class="t-dim">─────────────────────────────────────────</span>`;
 
 const ABOUT_TEXT = ` Hi, my name is <span class="t-white font-bold">Rakesh Sarkar</span>!
@@ -171,6 +186,11 @@ const TypewriterSpan = ({ text, speed = 22 }: { text: string; speed?: number }) 
   return <span className="t-body">{displayed}</span>;
 };
 
+const sanitizeHTML = (str: string) => {
+  if (!str) return '';
+  return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
+
 /* ─── boot ───────────────────────────────────────────────────────── */
 const BOOT: { cmd?: string; out?: string; ascii?: string; d: number }[] = [
   { cmd: 'welcome', d: 0 },
@@ -203,7 +223,10 @@ const ContactSection = () => {
   const [isSnakeMode, setIsSnakeMode] = useState(false);
   const [visitorName, setVisitorName] = useState(() => localStorage.getItem('visitorName') || '');
   const [identityStep, setIdentityStep] = useState(!localStorage.getItem('visitorName'));
+  const [isWatching, setIsWatching] = useState(false);
+  const [helpStep, setHelpStep] = useState(false);
   const chatChannelRef = useRef<any>(null);
+  const lastCmdTime = useRef<number>(0);
 
   /* scroll transforms */
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start end', 'start 0.15'] });
@@ -266,6 +289,28 @@ const ContactSection = () => {
     return () => { supabase.removeChannel(channel); };
   }, [isTailingLogs, addLine]);
 
+  // Global Live Feed
+  useEffect(() => {
+    if (!isWatching) return;
+    const channel = supabase.channel('global-feed')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'command_logs' }, payload => {
+        const row = payload.new;
+        addLine({
+          type: 'output',
+          text: ` <span class="t-dim">[LIVE ${new Date(row.created_at).toLocaleTimeString()}]</span> <span class="t-cyan">cmd</span> <span class="t-white">${sanitizeHTML(row.visitor_ip)}</span> <span class="t-green">→</span> <span class="t-yellow">${sanitizeHTML(row.command)}</span>`
+        });
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'guestbook' }, payload => {
+        const row = payload.new;
+        addLine({
+          type: 'output',
+          text: ` <span class="t-dim">[LIVE ${new Date(row.created_at).toLocaleTimeString()}]</span> <span class="t-purple">sign</span> <span class="t-white">${sanitizeHTML(row.visitor_alias)}</span> <span class="t-green">→</span> <span class="t-yellow">"${sanitizeHTML(row.message)}"</span>`
+        });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isWatching, addLine]);
+
   // Live Chat effect
   useEffect(() => {
     if (!isChatMode) return;
@@ -293,12 +338,19 @@ const ContactSection = () => {
 
   /* exec */
   const exec = useCallback(async (raw: string) => {
+    const now = Date.now();
+    if (now - lastCmdTime.current < 300) {
+      addLine({ type: 'output', text: ` <span class="t-red font-bold">⚠ RATE LIMIT EXCEEDED</span> <span class="t-dim">Please slow down your requests.</span>` });
+      return;
+    }
+    lastCmdTime.current = now;
+
     const cmd = raw.trim();
     
     /* ── identity registration ── */
     if (identityStep) {
       if (!cmd) return;
-      const name = cmd.substring(0, 20).replace(/[^a-zA-Z0-9 _-]/g, '');
+      const name = sanitizeHTML(cmd.substring(0, 20).replace(/[^a-zA-Z0-9 _-]/g, ''));
       if (name.length < 2) {
         addLine({ type: 'output', text: ` <span class="t-red">Name must be at least 2 alphanumeric characters.</span>` });
         return;
@@ -308,6 +360,33 @@ const ContactSection = () => {
       window.dispatchEvent(new CustomEvent('identity_updated', { detail: name }));
       setIdentityStep(false);
       addLine({ type: 'output', text: ` <span class="t-green">Identity verified. Welcome to the grid, ${name}.</span>` });
+      return;
+    }
+
+    /* ── help menu ── */
+    if (helpStep) {
+      const option = cmd.trim();
+      addLine({ type: 'command', text: option });
+      
+      if (option === 'q' || option.toLowerCase() === 'quit' || option.toLowerCase() === 'exit') {
+        setHelpStep(false);
+        addLine({ type: 'output', text: ` <span class="t-dim">Exited help menu.</span>` });
+        return;
+      }
+      
+      let text = '';
+      if (option === '1') text = HELP_GENERAL;
+      else if (option === '2') text = HELP_INTERACTIVE;
+      else if (option === '3') text = HELP_SYSTEM;
+      else if (option === '4') text = HELP_FUN;
+      else {
+        addLine({ type: 'output', text: ` <span class="t-red">Invalid selection. Exited help menu.</span>` });
+        setHelpStep(false);
+        return;
+      }
+      
+      addLine({ type: 'output', text });
+      setHelpStep(false);
       return;
     }
 
@@ -328,12 +407,12 @@ const ContactSection = () => {
            chatChannelRef.current.send({
              type: 'broadcast',
              event: 'chat_msg',
-             payload: { alias: visitorName, text: cmd }
+             payload: { alias: visitorName, text: sanitizeHTML(cmd) }
            });
            
            addLine({
               type: 'output',
-              text: ` <span class="t-dim">[${new Date().toLocaleTimeString()}]</span> <span class="t-yellow">You:</span> <span class="t-white">${cmd}</span>`
+              text: ` <span class="t-dim">[${new Date().toLocaleTimeString()}]</span> <span class="t-yellow">You:</span> <span class="t-white">${sanitizeHTML(cmd)}</span>`
            });
         } catch(e) {}
       }
@@ -413,7 +492,7 @@ const ContactSection = () => {
       return;
     }
     if (lo.startsWith('sign ')) {
-      const msg = cmd.substring(5).trim();
+      const msg = sanitizeHTML(cmd.substring(5).trim());
       if (!msg) { addLine({ type: 'output', text: ` <span class="t-red">Usage: sign [your message]</span>` }); return; }
       
       addLine({ type: 'output', text: ` <span class="t-dim">Carving your message into the guestbook...</span>` });
@@ -519,13 +598,26 @@ const ContactSection = () => {
     }
 
     switch (lo) {
-      case 'help': case 'h': addLine({ type: 'output', text: HELP_TEXT }); break;
+      case 'help': case 'h': 
+        addLine({ type: 'output', text: HELP_INDEX }); 
+        setHelpStep(true);
+        break;
       case 'about':   addLine({ type: 'output', text: ABOUT_TEXT }); break;
       case 'contact': addLine({ type: 'output', text: CONTACT_TEXT }); break;
       case 'social':  addLine({ type: 'output', text: SOCIAL_TEXT }); break;
       case 'skills':  addLine({ type: 'output', text: SKILLS_TEXT }); break;
       case 'hire':    addLine({ type: 'output', text: ` Let's get in touch, ${visitorName}! 🤝\n Enter your <span class="t-yellow">email</span>:` }); setHD({ name: visitorName, email: '', msg: '' }); setHire('email'); break;
-      case 'clear':   setLines([]); setIsTailingLogs(false); return;
+      case 'clear':   setLines([]); setIsTailingLogs(false); setIsWatching(false); return;
+      case 'watch':
+        if (!isAdmin) { addLine({ type: 'output', text: ` <span class="t-red">✗ Permission denied.</span>` }); break; }
+        setIsWatching(true);
+        addLine({ type: 'output', text: ` <span class="t-dim">Subscribing to Global Database Webhooks...</span>\n <span class="t-green font-bold">✓ Connected to Matrix Feed. Type 'unwatch' to disconnect.</span>\n` });
+        break;
+      case 'unwatch':
+        if (!isAdmin) { addLine({ type: 'output', text: ` <span class="t-red">✗ Permission denied.</span>` }); break; }
+        setIsWatching(false);
+        addLine({ type: 'output', text: ` <span class="t-yellow">Disconnected from Global Matrix Feed.</span>` });
+        break;
       case 'welcome': 
         addLine({ type: 'ascii', text: ASCII_NAME }); 
         addLine({ type: 'output', text: ` Welcome back! Type '<span class="t-green">help</span>' for commands.` }); 
@@ -632,6 +724,7 @@ const ContactSection = () => {
  <span class="t-dim">─────────────────────────────────────────</span>
   <span class="t-yellow">stats</span>       <span class="t-dim">→</span> Real-time traffic & analytics
   <span class="t-yellow">logs</span>        <span class="t-dim">→</span> Server event stream
+  <span class="t-yellow">watch</span>       <span class="t-dim">→</span> Live global database feed
   <span class="t-yellow">telemetry</span>   <span class="t-dim">→</span> Visitor command history
   <span class="t-yellow">users</span>       <span class="t-dim">→</span> View active connections
   <span class="t-yellow">top</span>         <span class="t-dim">→</span> Task manager
@@ -898,13 +991,15 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
     }
   };
 
-  const PROMPT = identityStep
-    ? '<span class="t-yellow font-bold">Alias: </span>'
-    : hireStep
-      ? '<span class="t-yellow font-bold">> </span>'
-      : isAdmin 
-        ? '<span class="t-red font-bold">root</span><span class="t-dim">@</span><span class="t-purple">rakesh.dev</span><span class="t-white font-bold">:#</span>' 
-        : `<span class="t-green">${visitorName || 'visitor'}</span><span class="t-dim">@</span><span class="t-purple">rakesh.dev</span><span class="t-white">:~$</span>`;
+  const PROMPT = helpStep
+    ? '<span class="t-cyan font-bold">Select section (1-4) or &apos;q&apos; to quit: </span>'
+    : identityStep
+      ? '<span class="t-yellow font-bold">Alias: </span>'
+      : hireStep
+        ? '<span class="t-yellow font-bold">> </span>'
+        : isAdmin 
+          ? '<span class="t-red font-bold">root</span><span class="t-dim">@</span><span class="t-purple">rakesh.dev</span><span class="t-white font-bold">:#</span>' 
+          : `<span class="t-green">${visitorName || 'visitor'}</span><span class="t-dim">@</span><span class="t-purple">rakesh.dev</span><span class="t-white">:~$</span>`;
 
   return (
     <section ref={wrapRef} id="contact" className="relative z-20 w-full bg-[#0c0c0c] pt-8 sm:pt-12 pb-8 sm:pb-14"
