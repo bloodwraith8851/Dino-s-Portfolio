@@ -14,15 +14,6 @@ const ASCII_NAME = `
 `;
 
 /* ─── fun data ───────────────────────────────────────────────────── */
-const JOKES = [
-  `Why do programmers prefer dark mode?\n <span class="t-yellow">Because light attracts bugs. 🐛</span>`,
-  `A SQL query walks into a bar, sees two tables and asks...\n <span class="t-yellow">"Can I JOIN you?" 🍺</span>`,
-  `How many programmers does it take to change a light bulb?\n <span class="t-yellow">None, that's a hardware problem. 💡</span>`,
-  `!false\n <span class="t-yellow">It's funny because it's true. 😄</span>`,
-  `A programmer's wife says: "Go to the store and buy a loaf of bread. If they have eggs, buy a dozen."\n <span class="t-yellow">He comes home with 12 loaves of bread. 🍞</span>`,
-  `What's the object-oriented way to become wealthy?\n <span class="t-yellow">Inheritance. 💰</span>`,
-  `Why was the JavaScript developer sad?\n <span class="t-yellow">Because he didn't Node how to Express himself. 😢</span>`,
-];
 
 const FORTUNES = [
   `🔮 <span class="t-purple">You will merge to main on the first try today.</span>`,
@@ -121,6 +112,10 @@ const HELP_SYSTEM = `
 const HELP_FUN = `
  <span class="t-dim">Easter eggs — try these for fun:</span>
  <span class="t-dim">─────────────────────────────────────────</span>
+  <span class="t-yellow">github</span>      <span class="t-dim">→</span> Live GitHub stats
+  <span class="t-yellow">crypto</span>      <span class="t-dim">→</span> Live crypto prices
+  <span class="t-yellow">news</span>        <span class="t-dim">→</span> Top tech news
+  <span class="t-yellow">trivia</span>      <span class="t-dim">→</span> Random tech trivia
   <span class="t-yellow">weather</span>     <span class="t-dim">→</span> Current weather forecast
   <span class="t-yellow">joke</span>        <span class="t-dim">→</span> Random dev joke
   <span class="t-yellow">quote</span>       <span class="t-dim">→</span> Inspirational quote
@@ -280,11 +275,11 @@ const ContactSection = () => {
   useEffect(() => {
     if (!isTailingLogs) return;
     const channel = supabase.channel('realtime_logs')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'server_logs' }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'command_logs' }, payload => {
         const newLog = payload.new;
         addLine({
           type: 'output',
-          text: ` <span class="t-dim">[${new Date(newLog.created_at).toLocaleTimeString()}]</span> <span class="t-green">LIVE</span> ${newLog.message}`
+          text: ` <span class="t-dim">[${new Date(newLog.created_at || Date.now()).toLocaleTimeString()}]</span> <span class="t-yellow">${newLog.visitor_ip}</span> <span class="t-white">executed:</span> <span class="t-cyan">${newLog.command}</span>`
         });
       })
       .subscribe();
@@ -368,28 +363,29 @@ const ContactSection = () => {
     /* ── help menu ── */
     if (helpStep) {
       const option = cmd.trim();
-      addLine({ type: 'command', text: option });
       
-      if (option === 'q' || option.toLowerCase() === 'quit' || option.toLowerCase() === 'exit') {
+      if (['1', '2', '3', '4', 'q', 'quit', 'exit'].includes(option.toLowerCase())) {
+        addLine({ type: 'command', text: option });
+        
+        if (option === 'q' || option.toLowerCase() === 'quit' || option.toLowerCase() === 'exit') {
+          setHelpStep(false);
+          addLine({ type: 'output', text: ` <span class="t-dim">Exited help menu.</span>` });
+          return;
+        }
+        
+        let text = '';
+        if (option === '1') text = HELP_GENERAL;
+        else if (option === '2') text = HELP_INTERACTIVE;
+        else if (option === '3') text = HELP_SYSTEM;
+        else if (option === '4') text = HELP_FUN;
+        
+        addLine({ type: 'output', text });
         setHelpStep(false);
-        addLine({ type: 'output', text: ` <span class="t-dim">Exited help menu.</span>` });
         return;
       }
       
-      let text = '';
-      if (option === '1') text = HELP_GENERAL;
-      else if (option === '2') text = HELP_INTERACTIVE;
-      else if (option === '3') text = HELP_SYSTEM;
-      else if (option === '4') text = HELP_FUN;
-      else {
-        addLine({ type: 'output', text: ` <span class="t-red">Invalid selection. Exited help menu.</span>` });
-        setHelpStep(false);
-        return;
-      }
-      
-      addLine({ type: 'output', text });
+      // Not a help menu option, silently exit help and let the normal command processor handle it
       setHelpStep(false);
-      return;
     }
 
     const lo  = cmd.toLowerCase();
@@ -884,11 +880,11 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
         addLine({ type: 'output', text: ` <span class="t-dim">Connecting to secure log stream... (Type 'clear' to exit)</span>` });
         let fetchedLogs = false;
         try {
-          const { data } = await supabase.from('server_logs').select('*').order('created_at', { ascending: false }).limit(6);
+          const { data } = await supabase.from('command_logs').select('*').order('created_at', { ascending: false }).limit(6);
           if (data && data.length > 0) {
             const remoteLogs = data.reverse().map(l => ({
               type: 'output' as const,
-              text: ` <span class="t-dim">[${new Date(l.created_at).toLocaleTimeString()}]</span> <span class="t-yellow">REMOTE</span> ${l.message}`
+              text: ` <span class="t-dim">[${new Date(l.created_at).toLocaleTimeString()}]</span> <span class="t-yellow">${l.visitor_ip}</span> <span class="t-white">executed:</span> <span class="t-cyan">${l.command}</span>`
             }));
             addLines(remoteLogs, 300);
             fetchedLogs = true;
@@ -916,8 +912,6 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
       }
 
       /* ── fun commands ── */
-      case 'joke':
-        addLine({ type: 'output', text: ` ${JOKES[Math.floor(Math.random() * JOKES.length)]}` }); break;
       case 'fortune':
         addLine({ type: 'output', text: ` ${FORTUNES[Math.floor(Math.random() * FORTUNES.length)]}` }); break;
       case 'matrix':
@@ -1040,15 +1034,16 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
       case 'cat readme.md': case 'cat readme':
         addLine({ type: 'output', text: ` <span class="t-white font-bold"># Rakesh Sarkar</span>\n <span class="t-dim">Full-stack developer who writes code and breaks things (mostly on purpose).</span>\n <span class="t-green">★ Open to opportunities</span>` }); break;
       case 'weather': {
-        const geo = (window as any).__GEO_DATA__;
-        if (!geo || !geo.city || geo.city === 'Unknown') {
-          addLine({ type: 'output', text: ` <span class="t-red">✗ Could not determine your location for weather data.</span>` });
-          break;
-        }
-        addLine({ type: 'output', text: ` <span class="t-dim">Fetching weather for ${geo.city}...</span>` });
-        fetch(`https://wttr.in/${geo.city}?format=3`)
-          .then(res => res.text())
-          .then(text => addLine({ type: 'output', text: ` <span class="t-cyan">${text.trim()}</span>` }))
+        addLine({ type: 'output', text: ` <span class="t-dim">Detecting location and fetching weather...</span>` });
+        fetch('https://wttr.in/?format=j1')
+          .then(res => res.json())
+          .then(data => {
+            const current = data.current_condition[0];
+            const loc = data.nearest_area[0].areaName[0].value;
+            const temp = current.temp_C;
+            const desc = current.weatherDesc[0].value;
+            addLine({ type: 'output', text: ` <span class="t-cyan">☁️ ${loc}: ${desc}, ${temp}°C</span>` });
+          })
           .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch weather.</span>` }));
         break;
       }
@@ -1065,9 +1060,9 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
       }
       case 'quote': {
         addLine({ type: 'output', text: ` <span class="t-dim">Fetching an inspirational quote...</span>` });
-        fetch('https://api.quotable.io/random')
+        fetch('https://dummyjson.com/quotes/random')
           .then(res => res.json())
-          .then(data => addLine({ type: 'output', text: ` <span class="t-green">"${data.content}"</span>\n <span class="t-dim">— ${data.author}</span>` }))
+          .then(data => addLine({ type: 'output', text: ` <span class="t-green">"${data.quote}"</span>\n <span class="t-dim">— ${data.author}</span>` }))
           .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch quote.</span>` }));
         break;
       }
@@ -1081,6 +1076,51 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
             addLine({ type: 'output', text: ` <span class="t-red font-bold">Gotcha!</span> <span class="t-white">You caught a wild <span class="t-cyan font-bold capitalize">${data.name}</span>!</span>\n <span class="t-dim">Type: ${types} | Height: ${data.height/10}m | Weight: ${data.weight/10}kg</span>` });
           })
           .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ The Pokemon broke free!</span>` }));
+        break;
+      }
+      case 'github': {
+        addLine({ type: 'output', text: ` <span class="t-dim">Fetching GitHub stats for bloodwraith8851...</span>` });
+        fetch('https://api.github.com/users/bloodwraith8851')
+          .then(res => res.json())
+          .then(data => {
+            addLine({ type: 'output', text: ` <span class="t-green font-bold">@${data.login}</span> <span class="t-dim">(${data.name})</span>\n <span class="t-cyan">Repos:</span> ${data.public_repos} | <span class="t-yellow">Followers:</span> ${data.followers} | <span class="t-purple">Following:</span> ${data.following}\n <span class="t-dim">Profile:</span> <a href="${data.html_url}" target="_blank" class="t-link">${data.html_url}</a>` });
+          })
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch GitHub stats.</span>` }));
+        break;
+      }
+      case 'crypto': case 'btc': {
+        addLine({ type: 'output', text: ` <span class="t-dim">Fetching live crypto prices...</span>` });
+        fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd')
+          .then(res => res.json())
+          .then(data => {
+            addLine({ type: 'output', text: ` <span class="t-yellow font-bold">Bitcoin (BTC):</span> $${data.bitcoin.usd.toLocaleString()}\n <span class="t-purple font-bold">Ethereum (ETH):</span> $${data.ethereum.usd.toLocaleString()}\n <span class="t-cyan font-bold">Solana (SOL):</span> $${data.solana.usd.toLocaleString()}` });
+          })
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch crypto prices.</span>` }));
+        break;
+      }
+      case 'news': case 'tech': {
+        addLine({ type: 'output', text: ` <span class="t-dim">Fetching top tech stories from Hacker News...</span>` });
+        fetch('https://hacker-news.firebaseio.com/v0/topstories.json')
+          .then(res => res.json())
+          .then(ids => Promise.all(ids.slice(0, 3).map((id: number) => fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r => r.json()))))
+          .then(stories => {
+            const html = stories.map((s, i) => ` <span class="t-dim">${i+1}.</span> <a href="${s.url}" target="_blank" class="t-link hover:text-green-400">${s.title}</a> <span class="t-dim">(${s.score} pts)</span>`).join('\n');
+            addLine({ type: 'output', text: html });
+          })
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch news.</span>` }));
+        break;
+      }
+      case 'trivia': {
+        addLine({ type: 'output', text: ` <span class="t-dim">Fetching random tech trivia...</span>` });
+        fetch('https://opentdb.com/api.php?amount=1&category=18&type=multiple')
+          .then(res => res.json())
+          .then(data => {
+            const q = data.results[0];
+            const cleanQ = q.question.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&');
+            const cleanA = q.correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&');
+            addLine({ type: 'output', text: ` <span class="t-cyan font-bold">Q:</span> <span class="t-white">${cleanQ}</span>\n <span class="t-green font-bold">A:</span> <span class="opacity-0 hover:opacity-100 transition-opacity duration-300 bg-white/20 px-1 rounded cursor-help">${cleanA}</span> <span class="t-dim">(Hover to reveal)</span>` });
+          })
+          .catch(() => addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to fetch trivia.</span>` }));
         break;
       }
       case 'cd secret': case 'cat secret':
