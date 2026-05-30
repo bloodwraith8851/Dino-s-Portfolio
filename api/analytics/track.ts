@@ -22,7 +22,14 @@ export default async function handler(req: Request): Promise<Response> {
     const body = await req.json();
     const { event_type = 'page_view', metadata = {}, visitor_alias = 'anonymous' } = body;
 
-    const sql = neon(process.env.NEON_DATABASE_URL!);
+    if (!process.env.NEON_DATABASE_URL) {
+      console.warn('[track] Missing NEON_DATABASE_URL, skipping analytics');
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
+    const sql = neon(process.env.NEON_DATABASE_URL);
 
     // Upsert page view count
     if (event_type === 'page_view') {
@@ -46,9 +53,10 @@ export default async function handler(req: Request): Promise<Response> {
     });
   } catch (err: any) {
     console.error('[track] Error:', err);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+    // Return 200 anyway so we don't spam the user's console with 500 errors
+    return new Response(JSON.stringify({ ok: false, error: 'Silently caught' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 }
