@@ -4,6 +4,7 @@ import ServicesSection from './components/ServicesSection';
 import ProjectsSection from './components/ProjectsSection';
 import ContactSection from './components/ContactSection';
 import { supabase } from './lib/supabase';
+import { trackEvent } from './lib/neon';
 import { useEffect, useState } from 'react';
 
 // Expose globally for the terminal to read
@@ -92,11 +93,14 @@ const App = () => {
     };
     window.addEventListener('identity_updated', handleIdentity);
 
-    /* 2. Track Page View (Silently fail if table isn't created yet) */
+    /* 2. Track Page View via Neon DB Edge Function (server-side, secure) */
     const trackView = async () => {
-      const date = new Date().toISOString().split('T')[0];
-      // Note: Assumes an RPC or simple insert logic. If RPC fails, we ignore it.
-      await supabase.rpc('increment_page_view', { view_date: date });
+      const stored = localStorage.getItem('visitorName');
+      await trackEvent({
+        event_type: 'page_view',
+        visitor_alias: stored || 'anonymous',
+        metadata: { referrer: document.referrer, ua: navigator.userAgent.substring(0, 80) },
+      });
     };
     trackView();
 

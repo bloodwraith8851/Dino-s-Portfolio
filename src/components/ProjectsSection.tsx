@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import FadeIn from './FadeIn';
 import LiveProjectButton from './LiveProjectButton';
 import { supabase } from '../lib/supabase';
+import { projectImage, projectThumb } from '../lib/imagekit';
 
 interface ProjectData {
   number: string;
@@ -81,7 +82,22 @@ const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) 
 
   const handleLike = async () => {
     setLikes(l => l + 1); // Optimistic UI
-    await supabase.rpc('increment_project_like', { pid: project.number });
+    try {
+      const res = await fetch('/api/projects/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project.number }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        if (res.status === 429) {
+          // Rate limited — revert optimistic update
+          setLikes(l => Math.max(0, l - 1));
+        }
+      }
+    } catch {
+      setLikes(l => Math.max(0, l - 1));
+    }
   };
 
   // Scroll progress for THIS card relative to the whole projects scroll range.
@@ -152,10 +168,11 @@ const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) 
               style={{ height: 'clamp(130px, 16vw, 230px)' }}
             >
               <img
-                src={project.col1Image1}
+                src={projectThumb(project.col1Image1)}
                 alt={`${project.name} preview 1`}
                 className="h-full w-full object-cover"
                 loading="lazy"
+                decoding="async"
                 draggable={false}
               />
             </div>
@@ -164,10 +181,11 @@ const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) 
               style={{ height: 'clamp(160px, 22vw, 340px)' }}
             >
               <img
-                src={project.col1Image2}
+                src={projectThumb(project.col1Image2)}
                 alt={`${project.name} preview 2`}
                 className="h-full w-full object-cover"
                 loading="lazy"
+                decoding="async"
                 draggable={false}
               />
             </div>
@@ -176,10 +194,11 @@ const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) 
           {/* Right column - 1 tall */}
           <div className="overflow-hidden rounded-[40px] sm:rounded-[50px] md:rounded-[60px] min-h-0">
             <img
-              src={project.col2Image}
+              src={projectImage(project.col2Image)}
               alt={`${project.name} preview 3`}
               className="h-full w-full object-cover"
               loading="lazy"
+              decoding="async"
               draggable={false}
             />
           </div>

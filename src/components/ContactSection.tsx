@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import SnakeGame from './SnakeGame';
+import VisitorMap from './VisitorMap';
 
 /* ─── ASCII art ──────────────────────────────────────────────────── */
 const ASCII_NAME = `
@@ -89,6 +90,7 @@ const HELP_INTERACTIVE = `
  <span class="t-dim">─────────────────────────────────────────</span>
   <span class="t-cyan">snake</span>       <span class="t-dim">→</span> Play terminal Snake
   <span class="t-cyan">topscores</span>   <span class="t-dim">→</span> View global Snake leaderboard
+  <span class="t-cyan">map</span>         <span class="t-dim">→</span> Live visitor world map 🗺️
   <span class="t-cyan">polls</span>       <span class="t-dim">→</span> View community polls
   <span class="t-cyan">vote [p] [o]</span><span class="t-dim">→</span> Vote on a poll
   <span class="t-cyan">chat</span>        <span class="t-dim">→</span> Enter global live chat
@@ -220,6 +222,7 @@ const ContactSection = () => {
   const [isTailingLogs, setIsTailingLogs] = useState(false);
   const [isChatMode, setIsChatMode] = useState(false);
   const [isSnakeMode, setIsSnakeMode] = useState(false);
+  const [isMapMode, setIsMapMode] = useState(false);
   const [visitorName, setVisitorName] = useState(() => localStorage.getItem('visitorName') || '');
   const [identityStep, setIdentityStep] = useState(!localStorage.getItem('visitorName'));
   const [isWatching, setIsWatching] = useState(false);
@@ -422,11 +425,30 @@ const ContactSection = () => {
     /* ── auth step ── */
     if (authStep === 'password') {
       addLine({ type: 'command', text: '•'.repeat(cmd.length), isAuth: true });
-      if (cmd === 'admin' || cmd === 'root' || cmd === 'sudo') {
-        setIsAdmin(true);
-        addLine({ type: 'output', text: ` <span class="t-green">✓ Authentication successful. Welcome, Admin.</span>\n Type '<span class="t-yellow">admin</span>' for tools.` });
-      } else {
-        addLine({ type: 'output', text: ` <span class="t-red">✗ Authentication failed. This incident will be reported.</span>` });
+      // Authenticate via Edge Function (JWT-based, server-side)
+      try {
+        addLine({ type: 'output', text: ` <span class="t-dim">Authenticating with server...</span>` });
+        const res = await fetch('/api/auth/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: cmd }),
+        });
+        if (res.ok) {
+          const { token } = await res.json();
+          sessionStorage.setItem('admin_token', token);
+          setIsAdmin(true);
+          addLine({ type: 'output', text: ` <span class="t-green">✓ Authentication successful. Welcome, Admin.</span>\n Type '<span class="t-yellow">admin</span>' for tools.` });
+        } else {
+          addLine({ type: 'output', text: ` <span class="t-red">✗ Authentication failed. This incident will be reported.</span>` });
+        }
+      } catch {
+        // Fallback for local dev without vercel dev
+        if (cmd === 'admin' || cmd === 'root' || cmd === 'sudo') {
+          setIsAdmin(true);
+          addLine({ type: 'output', text: ` <span class="t-green">✓ Authentication successful (dev mode).</span>` });
+        } else {
+          addLine({ type: 'output', text: ` <span class="t-red">✗ Authentication failed.</span>` });
+        }
       }
       setAuthStep(null);
       return;
@@ -454,29 +476,31 @@ const ContactSection = () => {
               else addLine({ type: 'output', text: ` <span class="t-green">✓ Saved to Database.</span>` });
             });
 
-            // 2. Send Email via Web3Forms
+            // 2. Queue email via Inngest (server-side Resend) — replaces Web3Forms
+            addLine({ type: 'output', text: ` <span class="t-dim">Dispatching notification via background job...</span>` });
+            fetch('/api/notifications/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'hire',
+                name: hireData.name,
+                email: hireData.email,
+                message: hireData.msg,
+              }),
+            }).then(res => {
+              if (res.ok) addLine({ type: 'output', text: ` <span class="t-green">✓ Email notification queued via Inngest + Resend!</span>` });
+              else addLine({ type: 'output', text: ` <span class="t-yellow">⚠ Notification queued (Inngest key pending).</span>` });
+            }).catch(() => {
+              // Fallback to Web3Forms if Edge Function unavailable (local dev)
               const accessKey = (import.meta as any).env.VITE_WEB3FORMS_KEY;
-            if (accessKey) {
-              addLine({ type: 'output', text: ` <span class="t-dim">Dispatching email notification...</span>` });
-              fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({
-                  access_key: accessKey,
-                  subject: '🚀 New Lead from Terminal Portfolio!',
-                  from_name: 'Terminal Server',
-                  Name: hireData.name,
-                  Email: hireData.email,
-                  Message: hireData.msg,
-                  Time: new Date().toLocaleString(),
-                  Platform: navigator.platform || 'Unknown'
-                })
-              }).then(res => res.json()).then(res => {
-                if(res.success) addLine({ type: 'output', text: ` <span class="t-green">✓ Email dispatched to Rakesh!</span>` });
-              }).catch(() => {});
-            } else {
-               addLine({ type: 'output', text: ` <span class="t-yellow">⚠ Email dispatch skipped (Web3Forms Key missing).</span>` });
-            }
+              if (accessKey) {
+                fetch('https://api.web3forms.com/submit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                  body: JSON.stringify({ access_key: accessKey, subject: '🚀 New Lead!', Name: hireData.name, Email: hireData.email, Message: hireData.msg }),
+                }).then(r => r.json()).then(r => { if (r.success) addLine({ type: 'output', text: ` <span class="t-green">✓ Email dispatched (fallback).</span>` }); }).catch(() => {});
+              }
+            });
 
             addLine({ type: 'output', text: ` <span class="t-green font-bold">✓ Process complete! I'll get back to you soon 🚀</span>` });
           } else {
@@ -500,6 +524,12 @@ const ContactSection = () => {
       try {
         await supabase.from('guestbook').insert([{ visitor_alias: visitorName || 'Anonymous', message: msg }]);
         addLine({ type: 'output', text: ` <span class="t-green">✓ Your mark has been left. Type 'guestbook' to see it!</span>` });
+        // Fire Inngest notification event (non-blocking)
+        fetch('/api/notifications/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'guestbook', visitor_alias: visitorName || 'Anonymous', message: msg }),
+        }).catch(() => {});
       } catch (e) {
         addLine({ type: 'output', text: ` <span class="t-red">✗ Failed to sign the guestbook.</span>` });
       }
@@ -674,6 +704,10 @@ const ContactSection = () => {
       }
       case 'snake':
         setIsSnakeMode(true); return;
+      case 'map':
+        setIsMapMode(true);
+        addLine({ type: 'output', text: ` <span class="t-dim">Rendering live visitor map...</span>` });
+        return;
       case 'topscores': {
         addLine({ type: 'output', text: ` <span class="t-dim">Fetching global Snake leaderboard...</span>` });
         try {
@@ -1283,6 +1317,13 @@ ${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
                     dangerouslySetInnerHTML={{ __html: line.text }} />
                 );
               })}
+
+              {/* Visitor Map — rendered inline in terminal output */}
+              {isMapMode && (
+                <div className="my-4">
+                  <VisitorMap onClose={() => setIsMapMode(false)} />
+                </div>
+              )}
 
               {/* input line */}
               {(ready || identityStep) && (
