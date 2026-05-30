@@ -45,28 +45,28 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
 
   useEffect(() => {
     let currentLine = 0;
+    let timeoutId: NodeJS.Timeout;
     
     const showNextLine = () => {
       if (currentLine >= BOOT_LOGS.length) {
         setIsFading(true);
-        setTimeout(onComplete, 800);
+        timeoutId = setTimeout(onComplete, 800);
         return;
       }
       
-      setLines(prev => [...prev, BOOT_LOGS[currentLine]]);
+      setLines(prev => [...prev, BOOT_LOGS[currentLine] || '']);
       currentLine++;
       
-      // Random delay between lines for realism (10ms to 120ms), with pauses for specific lines
       let delay = Math.random() * 110 + 10;
-      if (currentLine === 2) delay = 400; // Pause after ramdisk
-      if (currentLine === 25) delay = 600; // Pause before custom daemons
-      if (currentLine === BOOT_LOGS.length - 1) delay = 800; // Final pause
+      if (currentLine === 2) delay = 400; 
+      if (currentLine === 25) delay = 600; 
+      if (currentLine === BOOT_LOGS.length - 1) delay = 800; 
       
-      setTimeout(showNextLine, delay);
+      timeoutId = setTimeout(showNextLine, delay);
     };
 
-    const initialDelay = setTimeout(showNextLine, 300);
-    return () => clearTimeout(initialDelay);
+    timeoutId = setTimeout(showNextLine, 300);
+    return () => clearTimeout(timeoutId);
   }, [onComplete]);
 
   return (
@@ -85,7 +85,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             transition={{ duration: 0.1 }}
             className="mb-1"
           >
-            {line.includes('[ OK ]') ? (
+            {line && typeof line === 'string' && line.includes('[ OK ]') ? (
               <span dangerouslySetInnerHTML={{ __html: line.replace('[ OK ]', '[ <span class="text-[#00ff88]">OK</span> ]') }} />
             ) : line}
           </motion.div>
