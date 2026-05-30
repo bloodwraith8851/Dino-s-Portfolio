@@ -3,6 +3,7 @@ import AboutSection from './components/AboutSection';
 import ServicesSection from './components/ServicesSection';
 import ProjectsSection from './components/ProjectsSection';
 import ContactSection from './components/ContactSection';
+import BootSequence from './components/BootSequence';
 import { supabase } from './lib/supabase';
 import { trackEvent } from './lib/neon';
 import { useEffect, useState } from 'react';
@@ -19,6 +20,9 @@ window.__VISITOR_PRESENCE__ = [];
 
 const App = () => {
   const [isBanned, setIsBanned] = useState<boolean | null>(null);
+  const [showBoot, setShowBoot] = useState<boolean>(
+    !sessionStorage.getItem('hasBooted')
+  );
 
   useEffect(() => {
     /* 0. Check for Banned IP */
@@ -130,16 +134,27 @@ const App = () => {
   if (isBanned === null) return <div className="h-screen w-full bg-[#0c0c0c]" />;
 
   return (
-    <main
-      className="relative w-full"
-      style={{ overflowX: 'clip', background: '#0C0C0C' }}
-    >
-      <HeroSection />
-      <AboutSection />
-      <ServicesSection />
-      <ProjectsSection />
-      <ContactSection />
-    </main>
+    <>
+      {showBoot && (
+        <BootSequence onComplete={() => {
+          setShowBoot(false);
+          sessionStorage.setItem('hasBooted', 'true');
+        }} />
+      )}
+      
+      {!showBoot && (
+        <main
+          className="relative w-full crt-effect text-glitch-container"
+          style={{ overflowX: 'clip', background: '#0C0C0C' }}
+        >
+          <HeroSection />
+          <AboutSection />
+          <ServicesSection />
+          <ProjectsSection />
+          <ContactSection />
+        </main>
+      )}
+    </>
   );
 };
 

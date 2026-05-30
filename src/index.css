@@ -84,3 +84,58 @@ img {
 .t-ascii  { color: #7ee787; font-size: 9px; line-height: 1.15; opacity: 0.85; text-shadow: 0 0 12px rgba(126,231,135,0.25); }
 @media (min-width: 640px) { .t-ascii { font-size: 12px; } }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ *  ADVANCED TERMINAL AESTHETICS (Phase 1)
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.crt-effect::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.crt-effect::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(18, 16, 16, 0.1);
+  opacity: 0;
+  z-index: 50;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.02; }
+  50% { opacity: 0.05; }
+  100% { opacity: 0.02; }
+}
+
+.text-glitch {
+  animation: textGlitch 2s infinite linear alternate-reverse;
+}
+
+@keyframes textGlitch {
+  0% { transform: translate(0) }
+  20% { transform: translate(-2px, 1px) }
+  40% { transform: translate(-2px, -1px) }
+  60% { transform: translate(2px, 1px) }
+  80% { transform: translate(2px, -1px) }
+  100% { transform: translate(0) }
+}

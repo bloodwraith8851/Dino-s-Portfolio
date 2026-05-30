@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Free topojson world map from CDN
-const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+import GlobeMap from './GlobeMap';
 
 interface VisitorMarker {
   alias: string;
@@ -160,94 +157,16 @@ const VisitorMap = ({ onClose }: VisitorMapProps) => {
         </div>
 
         {/* Map */}
-        <div className="relative" style={{ height: '300px' }}>
-          <ComposableMap
-            projection="geoNaturalEarth1"
-            style={{ width: '100%', height: '100%' }}
-            projectionConfig={{ scale: 145, center: [10, 10] }}
-          >
-            <ZoomableGroup>
-              {/* Countries */}
-              <Geographies geography={GEO_URL}>
-                {({ geographies }) =>
-                  geographies.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      style={{
-                        default: { fill: '#0d1f2d', stroke: '#1e3a4a', strokeWidth: 0.5, outline: 'none' },
-                        hover: { fill: '#0d1f2d', stroke: '#1e3a4a', strokeWidth: 0.5, outline: 'none' },
-                        pressed: { fill: '#0d1f2d', stroke: '#1e3a4a', strokeWidth: 0.5, outline: 'none' },
-                      }}
-                    />
-                  ))
-                }
-              </Geographies>
-
-              {/* Visitor Markers */}
-              {loaded &&
-                markers.map((marker, i) => {
-                  const isHome = i === 0;
-                  return (
-                    <Marker
-                      key={`${marker.alias}-${i}`}
-                      coordinates={marker.coordinates}
-                      onMouseEnter={(evt) => {
-                        const rect = containerRef.current?.getBoundingClientRect();
-                        if (rect) {
-                          const me = evt as unknown as MouseEvent;
-                          setTooltip({
-                            x: me.clientX - rect.left,
-                            y: me.clientY - rect.top,
-                            visitor: marker,
-                          });
-                        }
-                      }}
-                      onMouseLeave={() => setTooltip(null)}
-                    >
-                      {/* Pulse ring */}
-                      <circle r={isHome ? 14 : 10} fill={isHome ? '#00ff8820' : '#00d4ff18'} className="animate-ping" style={{ animationDuration: isHome ? '1.5s' : '2s' }} />
-                      <circle r={isHome ? 7 : 4} fill={isHome ? '#00ff88' : '#00d4ff'} opacity={0.9} />
-                      <circle r={isHome ? 3 : 2} fill="#fff" opacity={0.8} />
-                    </Marker>
-                  );
-                })}
-            </ZoomableGroup>
-          </ComposableMap>
-
-          {/* Tooltip */}
-          {tooltip && (
-            <div
-              className="absolute pointer-events-none z-10 px-3 py-2 rounded-lg text-xs font-mono border"
-              style={{
-                left: Math.min(tooltip.x + 12, 300),
-                top: Math.max(tooltip.y - 60, 8),
-                background: '#0a1520ee',
-                border: '1px solid #1e3a4a',
-                color: '#D7E2EA',
-                minWidth: '160px',
-              }}
-            >
-              <div className="text-[#00d4ff] font-bold">{tooltip.visitor.alias}</div>
-              <div className="text-[#6b8899] mt-1">{tooltip.visitor.city}</div>
-              <div className="text-[#4a6a7a] text-[10px]">{tooltip.visitor.org}</div>
-              <div className="text-[#3a5a6a] text-[10px] mt-1">
-                since {new Date(tooltip.visitor.online_at).toLocaleTimeString()}
-              </div>
-            </div>
+        <div className="relative w-full h-[300px]">
+          {loaded && (
+            <GlobeMap 
+              markers={markers.map(m => ({
+                coordinates: m.coordinates,
+                label: `${m.alias} - ${m.city}`,
+                active: m.org !== 'Server Origin'
+              }))} 
+            />
           )}
-
-          {/* Legend */}
-          <div className="absolute bottom-2 right-3 flex flex-col gap-1 text-[10px] font-mono text-[#4a6a7a]">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#00ff88]" />
-              <span>rakesh.dev origin</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#00d4ff]" />
-              <span>active visitor</span>
-            </div>
-          </div>
         </div>
       </motion.div>
     </AnimatePresence>
