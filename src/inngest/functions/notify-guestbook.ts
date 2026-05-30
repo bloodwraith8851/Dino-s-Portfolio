@@ -17,7 +17,7 @@ export const notifyGuestbook = inngest.createFunction(
     // Step 1: Send email notification to owner
     const { data, error } = await step.run('send-email-notification', async () => {
       return resend.emails.send({
-        from: 'Portfolio Terminal <notifications@rakesh.dev>',
+        from: 'Portfolio Terminal <onboarding@resend.dev>',
         to: ['rakeshsarkar9711@gmail.com'],
         subject: `✍️ New Guestbook Entry from ${visitor_alias}`,
         html: `

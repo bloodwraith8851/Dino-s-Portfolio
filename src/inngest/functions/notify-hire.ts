@@ -17,7 +17,8 @@ export const notifyHire = inngest.createFunction(
     // Step 1: Send rich hire-request email to owner
     const { data, error } = await step.run('send-hire-email', async () => {
       return resend.emails.send({
-        from: 'Portfolio Terminal <notifications@rakesh.dev>',
+        // Use onboarding@resend.dev since the custom domain is not yet verified in Resend
+        from: 'Portfolio Terminal <onboarding@resend.dev>',
         to: ['rakeshsarkar9711@gmail.com'],
         replyTo: email,
         subject: `🚀 New Lead: ${name} wants to hire you!`,
@@ -82,41 +83,20 @@ export const notifyHire = inngest.createFunction(
       throw new Error(`Failed to send hire email: ${error.message}`);
     }
 
-    // Step 2: Send confirmation back to the lead (optional — remove if you don't want this)
+    // Step 2: Send confirmation back to the lead
+    // NOTE: This is currently disabled because Resend free tier does not allow sending emails
+    // to arbitrary addresses (like the visitor's email) without a verified domain.
+    // Once you verify rakesh.dev on Resend, you can uncomment this block.
+    /*
     await step.run('send-confirmation-to-lead', async () => {
       return resend.emails.send({
         from: 'Rakesh Sarkar <hello@rakesh.dev>',
         to: [email],
         subject: `Got your message, ${name}! 🙌`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: 'Courier New', monospace; background: #0C0C0C; color: #D7E2EA; margin: 0; padding: 20px; }
-              .container { max-width: 560px; margin: 0 auto; background: #111; border: 1px solid #1e3a4a; border-radius: 16px; padding: 40px; }
-              h2 { color: #00ff88; font-size: 22px; margin: 0 0 24px; }
-              p { color: #a0b4be; line-height: 1.8; margin-bottom: 16px; }
-              .highlight { color: #D7E2EA; }
-              .footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid #1e3a4a; font-size: 12px; color: #3a5a6a; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h2>Hey ${name}, message received! 👋</h2>
-              <p>Thanks for reaching out through my terminal portfolio. I've received your message and will get back to you within <span class="highlight">24-48 hours</span>.</p>
-              <p>Your message: <em style="color:#8ab4c4">"${message}"</em></p>
-              <p>In the meantime, feel free to check out my work on <a href="https://github.com/bloodwraith8851" style="color:#00d4ff">GitHub</a> or connect on <a href="https://www.linkedin.com/in/rakesh-sarkar-9711/" style="color:#00d4ff">LinkedIn</a>.</p>
-              <div class="footer">
-                Rakesh Sarkar · Full-Stack Developer · New Delhi, India<br>
-                <a href="mailto:rakeshsarkar9711@gmail.com" style="color:#3a5a6a">rakeshsarkar9711@gmail.com</a>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
+        html: `...`
       });
     });
+    */
 
     return { success: true, emailId: data?.id, leadEmail: email };
   }
