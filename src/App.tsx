@@ -20,9 +20,7 @@ window.__VISITOR_PRESENCE__ = [];
 
 const App = () => {
   const [isBanned, setIsBanned] = useState<boolean | null>(null);
-  const [showBoot, setShowBoot] = useState<boolean>(
-    !sessionStorage.getItem('hasBooted')
-  );
+  const [showBoot, setShowBoot] = useState<boolean>(true); // Play on every refresh
 
   useEffect(() => {
     /* 0. Check for Banned IP */
@@ -136,15 +134,12 @@ const App = () => {
   return (
     <>
       {showBoot && (
-        <BootSequence onComplete={() => {
-          setShowBoot(false);
-          sessionStorage.setItem('hasBooted', 'true');
-        }} />
+        <BootSequence onComplete={() => setShowBoot(false)} />
       )}
       
       {!showBoot && (
         <main
-          className="relative w-full crt-effect text-glitch-container"
+          className="relative w-full"
           style={{ overflowX: 'clip', background: '#0C0C0C' }}
         >
           <HeroSection />

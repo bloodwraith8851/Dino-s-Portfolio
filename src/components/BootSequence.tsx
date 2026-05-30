@@ -41,12 +41,14 @@ interface BootSequenceProps {
 
 export default function BootSequence({ onComplete }: BootSequenceProps) {
   const [lines, setLines] = useState<string[]>([]);
+  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
     let currentLine = 0;
     
     const showNextLine = () => {
       if (currentLine >= BOOT_LOGS.length) {
+        setIsFading(true);
         setTimeout(onComplete, 800);
         return;
       }
@@ -68,7 +70,12 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-[#0C0C0C] z-[9999] flex flex-col font-mono text-[13px] md:text-[14px] text-[#D7E2EA] p-4 md:p-8 overflow-hidden pointer-events-none crt-effect">
+    <motion.div 
+      initial={{ opacity: 1 }}
+      animate={{ opacity: isFading ? 0 : 1 }}
+      transition={{ duration: 0.5 }}
+      className="fixed inset-0 bg-[#0C0C0C] z-[9999] flex flex-col font-mono text-[13px] md:text-[14px] text-[#D7E2EA] p-4 md:p-8 overflow-hidden pointer-events-none"
+    >
       <div className="flex-1 flex flex-col justify-end">
         {lines.map((line, i) => (
           <motion.div 
@@ -87,6 +94,6 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
           <div className="h-5 w-2.5 bg-[#D7E2EA] mt-1 animate-pulse" />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
