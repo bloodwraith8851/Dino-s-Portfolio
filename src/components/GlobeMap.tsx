@@ -42,8 +42,12 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
   const pointsData = markers.map(m => ({
     lat: m.coordinates[1],
     lng: m.coordinates[0],
-    label: m.label,
-    color: m.active ? '#00ff88' : '#3a5a6a',
+    label: `
+      <div style="background: rgba(10,21,32,0.95); padding: 6px 10px; border: 1px solid #1e3a4a; border-radius: 6px; font-family: monospace; color: #00d4ff; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+        <strong>${m.label}</strong>
+      </div>
+    `,
+    color: m.active ? '#00d4ff' : '#3a5a6a',
     size: m.active ? 1.5 : 0.5
   }));
 
@@ -56,12 +60,22 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
       startLng: NEW_DELHI.lng,
       endLat: m.coordinates[1],
       endLng: m.coordinates[0],
-      color: ['rgba(0,255,136,0.1)', 'rgba(0,255,136,0.9)']
+      color: ['rgba(0,212,255,0.1)', 'rgba(0,212,255,0.9)']
     }));
 
   // We add New Delhi as a permanent pulsing marker
   const allPoints = [
-    { lat: NEW_DELHI.lat, lng: NEW_DELHI.lng, label: 'Server: New Delhi', color: '#ff0055', size: 2 },
+    { 
+      lat: NEW_DELHI.lat, 
+      lng: NEW_DELHI.lng, 
+      label: `
+        <div style="background: rgba(10,21,32,0.95); padding: 6px 10px; border: 1px solid #1e3a4a; border-radius: 6px; font-family: monospace; color: #00ff88; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+          <strong>Server Origin: New Delhi</strong>
+        </div>
+      `, 
+      color: '#00ff88', 
+      size: 2 
+    },
     ...pointsData
   ];
 
@@ -69,10 +83,10 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
     <div id="globe-container" className="w-full h-full min-h-[300px] flex items-center justify-center opacity-90 overflow-hidden relative">
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 font-mono text-[10px] text-[#4a6a7a]">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#ff0055] animate-pulse" /> Server (New Delhi)
+          <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" /> Server (New Delhi)
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" /> Active Visitors
+          <div className="w-2 h-2 rounded-full bg-[#00d4ff] animate-pulse" /> Active Visitors
         </div>
       </div>
       
@@ -80,7 +94,7 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
         ref={globeEl}
         width={dimensions.width}
         height={dimensions.height}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
+        globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundColor="rgba(0,0,0,0)"
         
@@ -89,6 +103,7 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
         pointLat="lat"
         pointLng="lng"
         pointColor="color"
+        pointLabel="label"
         pointAltitude={0.05}
         pointRadius="size"
         pointsMerge={false}

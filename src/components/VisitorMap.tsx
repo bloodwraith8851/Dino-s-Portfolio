@@ -162,7 +162,7 @@ const VisitorMap = ({ onClose }: VisitorMapProps) => {
             <GlobeMap 
               markers={markers.map(m => ({
                 coordinates: m.coordinates,
-                label: `${m.alias} - ${m.city}`,
+                label: `${m.alias}<br/><span style="color:#8ab4c4; font-size:10px;">${m.city} • ${m.org}</span>`,
                 active: m.org !== 'Server Origin'
               }))} 
             />
