@@ -116,7 +116,7 @@ const App = () => {
 
   if (isBanned === true) {
     return (
-      <div className="flex items-center justify-center h-screen w-full bg-[#050505] text-red-500 font-mono text-center flex-col gap-6 p-6">
+      <div className="flex items-center justify-center h-screen w-full bg-[var(--bg-color)] text-red-500 font-mono text-center flex-col gap-6 p-6">
         <span className="text-8xl">🛑</span>
         <h1 className="text-4xl md:text-6xl font-bold tracking-widest">ERROR 403</h1>
         <h2 className="text-xl md:text-2xl text-red-400">ACCESS FORBIDDEN</h2>
@@ -131,7 +131,7 @@ const App = () => {
   }
 
   // Prevent flashing the site while checking ban status
-  if (isBanned === null) return <div className="h-screen w-full bg-[#0c0c0c]" />;
+  if (isBanned === null) return <div className="h-screen w-full bg-[var(--bg-color)]" />;
 
   return (
     <>
@@ -144,7 +144,7 @@ const App = () => {
       
       <main
         className="relative w-full"
-        style={{ overflowX: 'clip', background: '#0C0C0C' }}
+        style={{ overflowX: 'clip', background: 'var(--bg-color)' }}
       >
           <HeroSection />
           <AboutSection />

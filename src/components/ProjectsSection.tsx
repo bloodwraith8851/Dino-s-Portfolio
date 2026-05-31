@@ -119,7 +119,7 @@ const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) 
     >
       <motion.article
         style={{ scale }}
-        className="origin-top mx-auto h-full w-full flex flex-col gap-4 sm:gap-6 md:gap-8 rounded-[40px] sm:rounded-[50px] md:rounded-[60px] border-2 border-[#D7E2EA] bg-[#0C0C0C] p-4 sm:p-6 md:p-8"
+        className="origin-top mx-auto h-full w-full flex flex-col gap-4 sm:gap-6 md:gap-8 rounded-[40px] sm:rounded-[50px] md:rounded-[60px] border-2 border-[#151515] bg-[#050505] p-4 sm:p-6 md:p-8"
       >
           {/* Top row: number + meta + button */}
                   <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 sm:gap-6">
@@ -145,9 +145,9 @@ const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) 
                           {project.name}
                           <button 
                             onClick={handleLike}
-                            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-[#1A1A1A]/80 hover:bg-[#2A2A2A] transition-all border border-[#333] px-3 py-1 sm:px-4 sm:py-1.5 rounded-full cursor-pointer group hover:border-red-500/50"
+                            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-[#1A1A1A]/80 hover:bg-[#2A2A2A] transition-all duration-200 ease-out-custom active:scale-95 border border-[#333] px-3 py-1 sm:px-4 sm:py-1.5 rounded-full cursor-pointer group hover:border-blue-500/50"
                           >
-                            <span className="text-red-500 group-hover:scale-125 transition-transform origin-center">❤️</span>
+                            <span className="text-blue-500 group-hover:scale-125 transition-transform origin-center">💙</span>
                             <span className="text-[#D7E2EA] font-mono tabular-nums">{likes}</span>
                           </button>
                         </h3>
@@ -214,7 +214,7 @@ const ProjectsSection = () => {
   return (
     <section
       id="projects"
-      className="relative z-10 -mt-10 sm:-mt-12 md:-mt-14 w-full rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] bg-[#0C0C0C] px-4 sm:px-6 md:px-10 pt-20 sm:pt-24 md:pt-32 pb-24"
+      className="relative z-10 -mt-10 sm:-mt-12 md:-mt-14 w-full rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] bg-[#050505] px-4 sm:px-6 md:px-10 pt-20 sm:pt-24 md:pt-32 pb-24"
     >
       <FadeIn y={40}>
         <h2

@@ -123,7 +123,7 @@ const HeroSection = () => {
 
             <a
               href="#contact"
-              className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 sm:px-5 sm:py-2.5 text-[10px] sm:text-xs font-medium uppercase tracking-[0.2em] text-white backdrop-blur-md transition hover:bg-white/20 hover:scale-[1.03]"
+              className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 sm:px-5 sm:py-2.5 text-[10px] sm:text-xs font-medium uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all duration-200 ease-out-custom hover:bg-white/20 active:scale-95"
             >
               Email me
             </a>
@@ -133,12 +133,6 @@ const HeroSection = () => {
         {/* Middle-left: PORTFOLIO + Name + Subtitle */}
         <div className="flex flex-1 items-center">
           <div className="w-full max-w-7xl px-6 md:px-10">
-            <FadeIn delay={0.3} y={20}>
-              <p className="mb-4 text-[10px] sm:text-xs font-medium uppercase tracking-[0.35em] text-white/60">
-                Portfolio · 2026
-              </p>
-            </FadeIn>
-
             <FadeIn delay={0.5} y={40}>
               <h1
                 className="font-black uppercase leading-[0.88] tracking-tight text-white"
@@ -187,7 +181,7 @@ const HeroSection = () => {
               <button
                 onClick={toggleMute}
                 aria-label={muted ? 'Unmute video' : 'Mute video'}
-                className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 hover:scale-110"
+                className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition-all duration-200 ease-out-custom hover:bg-white/20 active:scale-95"
               >
                 {muted ? (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

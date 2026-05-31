@@ -15,25 +15,24 @@ interface FadeInProps {
 const FadeIn = ({
   children,
   delay = 0,
-  duration = 0.7,
+  duration = 0.5,
   x = 0,
   y = 30,
   as = 'div',
   className,
   style,
 }: FadeInProps) => {
-  // motion.create() supports dynamic element types in framer-motion v12
   const MotionComponent = motion.create(as);
 
   return (
     <MotionComponent
-      initial={{ opacity: 0, x, y }}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: true, margin: '50px', amount: 0 }}
+      initial={{ opacity: 0, transform: `translate3d(${x}px, ${y}px, 0) scale(0.95)` }}
+      whileInView={{ opacity: 1, transform: 'translate3d(0px, 0px, 0) scale(1)' }}
+      viewport={{ once: true, margin: '-20px', amount: 0 }}
       transition={{
         delay,
         duration,
-        ease: [0.25, 0.1, 0.25, 1],
+        ease: [0.23, 1, 0.32, 1],
       }}
       className={className}
       style={style}
