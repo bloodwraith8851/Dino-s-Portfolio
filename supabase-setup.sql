@@ -53,7 +53,10 @@ CREATE POLICY "Anyone can read command logs"
   USING (true);
 
 -- Enable realtime for live tailing (admin 'logs' command)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.command_logs;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.command_logs;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 
 -- ┌─────────────────────────────────────┐
@@ -132,7 +135,10 @@ CREATE POLICY "Anyone can sign guestbook"
   ON public.guestbook FOR INSERT
   WITH CHECK (true);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.guestbook;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.guestbook;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 
 -- ┌─────────────────────────────────────┐
@@ -160,7 +166,10 @@ CREATE POLICY "Service role can read messages"
   ON public.messages FOR SELECT
   USING (auth.role() = 'service_role');
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 
 -- ┌─────────────────────────────────────┐
@@ -190,7 +199,10 @@ INSERT INTO public.project_likes (project_id, likes_count) VALUES (4, 0) ON CONF
 INSERT INTO public.project_likes (project_id, likes_count) VALUES (5, 0) ON CONFLICT DO NOTHING;
 INSERT INTO public.project_likes (project_id, likes_count) VALUES (6, 0) ON CONFLICT DO NOTHING;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.project_likes;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.project_likes;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 
 -- ┌─────────────────────────────────────┐

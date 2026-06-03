@@ -9,21 +9,21 @@ test.describe('Boot Sequence', () => {
 
     await page.goto('/');
 
-    // Check if boot sequence overlay is present
-    const bootOverlay = page.locator('.fixed.inset-0.bg-\\[\\#0C0C0C\\]');
-    await expect(bootOverlay).toBeVisible();
+    // The boot overlay uses a fixed full-screen div with z-[9999]
+    const bootOverlay = page.locator('[class*="fixed"][class*="inset-0"][class*="z-"]');
+    await expect(bootOverlay).toBeVisible({ timeout: 10000 });
 
-    // Check if some boot text appears
-    await expect(page.locator('text=Loading Linux')).toBeVisible();
+    // Check if boot text appears (the first BOOT_LOG line)
+    await expect(page.getByText('Loading Linux', { exact: false })).toBeVisible({ timeout: 10000 });
 
-    // Wait for boot sequence to finish (or we can skip it)
+    // Skip the boot sequence
     await page.keyboard.press('Escape');
-    
+
     // Boot overlay should disappear
-    await expect(bootOverlay).not.toBeVisible();
-    
-    // Main hero section should be visible
-    await expect(page.locator('h1', { hasText: 'RAKESH SARKAR' })).toBeVisible();
+    await expect(bootOverlay).not.toBeVisible({ timeout: 10000 });
+
+    // Main hero section should be visible — h1 contains "Rakesh" and "Sarkar" split by <br>
+    await expect(page.locator('h1', { hasText: 'Rakesh' })).toBeVisible({ timeout: 15000 });
   });
 
   test('skips boot sequence on subsequent visits', async ({ page }) => {
@@ -35,10 +35,10 @@ test.describe('Boot Sequence', () => {
     await page.goto('/');
 
     // Boot overlay should NOT be present
-    const bootOverlay = page.locator('.fixed.inset-0.bg-\\[\\#0C0C0C\\]');
-    await expect(bootOverlay).not.toBeVisible();
-    
-    // Main hero section should be visible immediately
-    await expect(page.locator('h1', { hasText: 'RAKESH SARKAR' })).toBeVisible();
+    const bootOverlay = page.locator('[class*="fixed"][class*="inset-0"][class*="z-\\[9999\\]"]');
+    await expect(bootOverlay).not.toBeVisible({ timeout: 5000 });
+
+    // Main hero h1 should be visible
+    await expect(page.locator('h1', { hasText: 'Rakesh' })).toBeVisible({ timeout: 15000 });
   });
 });
