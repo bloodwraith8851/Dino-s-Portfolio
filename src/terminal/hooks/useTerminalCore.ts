@@ -7,7 +7,7 @@ export function useTerminalCore(_visitorName: string) {
   const [history, setHistory] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const [isBooting, setIsBooting] = useState(true);
-  
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollBot = useCallback(() => {
     setTimeout(() => {
@@ -20,30 +20,37 @@ export function useTerminalCore(_visitorName: string) {
     }, 50);
   }, []);
 
-  const addLine = useCallback((line: Line) => {
-    setLines(prev => [...prev, line]);
-    scrollBot();
-  }, [scrollBot]);
+  const addLine = useCallback(
+    (line: Line) => {
+      setLines((prev) => [...prev, line]);
+      scrollBot();
+    },
+    [scrollBot],
+  );
 
-  const addLines = useCallback((newLines: Line[], gapMs = 100) => {
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < newLines.length) {
-        setLines(prev => [...prev, newLines[i]]);
-        scrollBot();
-        i++;
-      } else {
-        clearInterval(interval);
-      }
-    }, gapMs);
-  }, [scrollBot]);
+  const addLines = useCallback(
+    (newLines: Line[], gapMs = 100) => {
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < newLines.length) {
+          const line = newLines[i];
+          i++;
+          setLines((prev) => [...prev, line]);
+          scrollBot();
+        } else {
+          clearInterval(interval);
+        }
+      }, gapMs);
+    },
+    [scrollBot],
+  );
 
   const clearLines = useCallback(() => {
     setLines([]);
   }, []);
 
   const addToHistory = useCallback((cmd: string) => {
-    setHistory(prev => [...prev, cmd]);
+    setHistory((prev) => [...prev, cmd]);
   }, []);
 
   // Boot Sequence Effect
@@ -51,7 +58,7 @@ export function useTerminalCore(_visitorName: string) {
     let timeoutIds: NodeJS.Timeout[] = [];
     let cumulativeDelay = 0;
 
-    BOOT.forEach(step => {
+    BOOT.forEach((step) => {
       cumulativeDelay += step.d;
       const id = setTimeout(() => {
         if (step.cmd) {
@@ -90,6 +97,6 @@ export function useTerminalCore(_visitorName: string) {
     addLines,
     clearLines,
     addToHistory,
-    scrollBot
+    scrollBot,
   };
 }

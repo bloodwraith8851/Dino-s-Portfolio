@@ -52,7 +52,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       return this.props.fallback;
     }
 
-    const isDev = true; // Temporary debug for production crash
+    const isDev = (import.meta as any).env?.DEV || process.env.NODE_ENV === 'development';
 
     return (
       <div
