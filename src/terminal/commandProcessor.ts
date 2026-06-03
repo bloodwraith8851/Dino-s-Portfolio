@@ -1,5 +1,16 @@
 import type { CommandContext } from './types';
-import { HELP_INDEX, HELP_GENERAL, HELP_INTERACTIVE, HELP_SYSTEM, HELP_FUN, ABOUT_TEXT, CONTACT_TEXT, SOCIAL_TEXT, SKILLS_TEXT, NEOFETCH } from './constants';
+import {
+  HELP_INDEX,
+  HELP_GENERAL,
+  HELP_INTERACTIVE,
+  HELP_SYSTEM,
+  HELP_FUN,
+  ABOUT_TEXT,
+  CONTACT_TEXT,
+  SOCIAL_TEXT,
+  SKILLS_TEXT,
+  NEOFETCH,
+} from './constants';
 import * as fun from './commands/funCommands';
 import * as admin from './commands/adminCommands';
 import * as social from './commands/socialCommands';
@@ -26,7 +37,7 @@ export async function processCommand(
   state: {
     isFirstTime: boolean;
     isHelpMode: boolean;
-  }
+  },
 ) {
   const { addLine, addLines, isAdmin, visitorName, history, supabase, sanitizeHTML } = ctx;
   const cmd = cmdStr.trim();
@@ -35,14 +46,20 @@ export async function processCommand(
   // 1. Identity Registration
   if (state.isFirstTime) {
     if (!cmd) return;
-    const name = cmd.substring(0, 20).replace(/[^a-zA-Z0-9 ]/g, '').trim();
+    const name = cmd
+      .substring(0, 20)
+      .replace(/[^a-zA-Z0-9 ]/g, '')
+      .trim();
     if (name.length < 2) {
       addLine({ type: 'output', text: ` <span class="t-red">Name must be at least 2 alphanumeric characters.</span>` });
       return;
     }
     localStorage.setItem('visitor_alias', name);
     actions.setVisitorName(name);
-    addLine({ type: 'output', text: ` <span class="t-green">Identity confirmed. Welcome to the network, ${name}.</span>` });
+    addLine({
+      type: 'output',
+      text: ` <span class="t-green">Identity confirmed. Welcome to the network, ${name}.</span>`,
+    });
     addLine({ type: 'output', text: ` Type '<span class="t-green">help</span>' to see available commands.` });
     return;
   }
@@ -56,11 +73,19 @@ export async function processCommand(
       addLine({ type: 'output', text: ` <span class="t-dim">Exited help menu.</span>` });
       return;
     }
-    switch(lowCmd) {
-      case '1': addLine({ type: 'output', text: HELP_GENERAL }); return;
-      case '2': addLine({ type: 'output', text: HELP_INTERACTIVE }); return;
-      case '3': addLine({ type: 'output', text: HELP_SYSTEM }); return;
-      case '4': addLine({ type: 'output', text: HELP_FUN }); return;
+    switch (lowCmd) {
+      case '1':
+        addLine({ type: 'output', text: HELP_GENERAL });
+        return;
+      case '2':
+        addLine({ type: 'output', text: HELP_INTERACTIVE });
+        return;
+      case '3':
+        addLine({ type: 'output', text: HELP_SYSTEM });
+        return;
+      case '4':
+        addLine({ type: 'output', text: HELP_FUN });
+        return;
     }
     // Fallthrough: if not 1-4/q, exit help mode and process normally
     actions.setHelpMode(false);
@@ -69,7 +94,9 @@ export async function processCommand(
   // 3. Telemetry Logging (for normal commands)
   const isExcluded = ['sudo', 'su', 'login', 'admin', 'hire'].includes(lowCmd);
   if (!isAdmin && !isExcluded && lowCmd) {
-    Promise.resolve(supabase.from('command_logs').insert([{ visitor_alias: visitorName || 'Anonymous', command: cmd }])).catch(() => {});
+    Promise.resolve(
+      supabase.from('command_logs').insert([{ visitor_alias: visitorName || 'Anonymous', command: cmd }]),
+    ).catch(() => {});
   }
 
   // 4. Command Router
@@ -87,29 +114,47 @@ export async function processCommand(
       break;
 
     // --- Static Info ---
-    case 'about': addLine({ type: 'output', text: ABOUT_TEXT }); break;
-    case 'contact': addLine({ type: 'output', text: CONTACT_TEXT }); break;
-    case 'social': addLine({ type: 'output', text: SOCIAL_TEXT }); break;
-    case 'skills': addLine({ type: 'output', text: SKILLS_TEXT }); break;
-    case 'neofetch': addLine({ type: 'output', text: NEOFETCH }); break;
-    case 'whoami': 
-      addLine({ type: 'output', text: isAdmin ? ` <span class="t-green font-bold">root</span> <span class="t-dim">(Superuser)</span>` : ` <span class="t-white">${visitorName}</span> <span class="t-dim">(Guest Visitor)</span>` }); 
+    case 'about':
+      addLine({ type: 'output', text: ABOUT_TEXT });
       break;
-    
+    case 'contact':
+      addLine({ type: 'output', text: CONTACT_TEXT });
+      break;
+    case 'social':
+      addLine({ type: 'output', text: SOCIAL_TEXT });
+      break;
+    case 'skills':
+      addLine({ type: 'output', text: SKILLS_TEXT });
+      break;
+    case 'neofetch':
+      addLine({ type: 'output', text: NEOFETCH });
+      break;
+    case 'whoami':
+      addLine({
+        type: 'output',
+        text: isAdmin
+          ? ` <span class="t-green font-bold">root</span> <span class="t-dim">(Superuser)</span>`
+          : ` <span class="t-white">${visitorName}</span> <span class="t-dim">(Guest Visitor)</span>`,
+      });
+      break;
+
     // --- Core Navigation ---
-    case 'clear': 
+    case 'clear':
       actions.clearLines();
       actions.disableAllFeeds();
       break;
-    case 'history':
-      const hist = history.map((h, i) => `  <span class="t-dim">${(i+1).toString().padStart(3, ' ')}</span>  ${sanitizeHTML(h)}`).join('\\n');
+    case 'history': {
+      const hist = history
+        .map((h, i) => `  <span class="t-dim">${(i + 1).toString().padStart(3, ' ')}</span>  ${sanitizeHTML(h)}`)
+        .join('\\n');
       addLine({ type: 'output', text: `\\n${hist || ' <span class="t-dim">No command history</span>'}` });
       break;
+    }
     case 'exit':
     case 'quit':
       addLine({ type: 'output', text: ` <span class="t-dim">Terminating session...</span>` });
       break;
-    
+
     // --- Actions ---
     case 'hire':
     case 'hire me':
@@ -124,7 +169,7 @@ export async function processCommand(
     case 'map':
       actions.setMapMode(true);
       break;
-    
+
     // --- Auth & Admin ---
     case 'sudo':
     case 'su':
@@ -141,10 +186,14 @@ export async function processCommand(
       if (isAdmin) await admin.handleTelemetry(ctx);
       else addLine({ type: 'output', text: ` <span class="t-red">Permission denied.</span>` });
       break;
-    case 'motd':
+    case 'motd': {
       const motd = (window as any).__MOTD__ || 'Welcome to the Matrix.';
-      addLine({ type: 'output', text: ` <span class="t-yellow font-bold">[MOTD]</span> <span class="t-dim">${motd}</span>` });
+      addLine({
+        type: 'output',
+        text: ` <span class="t-yellow font-bold">[MOTD]</span> <span class="t-dim">${motd}</span>`,
+      });
       break;
+    }
     case 'set':
       if (isAdmin) await admin.handleSet(ctx, args);
       else addLine({ type: 'output', text: ` <span class="t-red">Permission denied.</span>` });
@@ -192,56 +241,135 @@ export async function processCommand(
       break;
 
     // --- Social & Interactive ---
-    case 'sign': await social.handleSign(ctx, args); break;
-    case 'guestbook': await social.handleGuestbook(ctx); break;
-    case 'polls': await social.handlePolls(ctx); break;
-    case 'vote': await social.handleVote(ctx, args); break;
-    case 'topscores': await social.handleTopScores(ctx); break;
-    case 'who': admin.handleUsers(ctx); break; // Re-using admin's user listing for public 'who'
-    
+    case 'sign':
+      await social.handleSign(ctx, args);
+      break;
+    case 'guestbook':
+      await social.handleGuestbook(ctx);
+      break;
+    case 'polls':
+      await social.handlePolls(ctx);
+      break;
+    case 'vote':
+      await social.handleVote(ctx, args);
+      break;
+    case 'topscores':
+      await social.handleTopScores(ctx);
+      break;
+    case 'who':
+      admin.handleUsers(ctx);
+      break; // Re-using admin's user listing for public 'who'
+
     // --- Fun / API ---
-    case 'fortune': fun.handleFortune(addLine); break;
-    case 'matrix': fun.handleMatrix(addLine); break;
+    case 'fortune':
+      fun.handleFortune(addLine);
+      break;
+    case 'matrix':
+      fun.handleMatrix(addLine);
+      break;
     case 'coffee':
-    case 'chai': fun.handleCoffee(addLine); break;
-    case 'flip': fun.handleFlip(addLine); break;
-    case 'calc': fun.handleCalc(addLine, args); break;
-    case 'top': fun.handleTop(addLine); break;
-    case 'echo': fun.handleEcho(addLine, args); break;
-    case 'weather': fun.handleWeather(addLine); break;
-    case 'joke': fun.handleJoke(addLine); break;
-    case 'quote': fun.handleQuote(addLine); break;
-    case 'pokemon': fun.handlePokemon(addLine); break;
-    case 'github': fun.handleGithubStats(addLine); break;
+    case 'chai':
+      fun.handleCoffee(addLine);
+      break;
+    case 'flip':
+      fun.handleFlip(addLine);
+      break;
+    case 'calc':
+      fun.handleCalc(addLine, args);
+      break;
+    case 'top':
+      fun.handleTop(addLine);
+      break;
+    case 'echo':
+      fun.handleEcho(addLine, args);
+      break;
+    case 'weather':
+      fun.handleWeather(addLine);
+      break;
+    case 'joke':
+      fun.handleJoke(addLine);
+      break;
+    case 'quote':
+      fun.handleQuote(addLine);
+      break;
+    case 'pokemon':
+      fun.handlePokemon(addLine);
+      break;
+    case 'github':
+      fun.handleGithubStats(addLine);
+      break;
     case 'crypto':
-    case 'btc': fun.handleCrypto(addLine); break;
+    case 'btc':
+      fun.handleCrypto(addLine);
+      break;
     case 'news':
-    case 'tech': fun.handleNews(addLine); break;
-    case 'trivia': fun.handleTrivia(addLine); break;
-    case 'commits': fun.handleCommits(addLine, addLines); break;
-    case 'status': fun.handleStatus(addLine); break;
-    case 'hack': fun.handleHack(addLine, addLines); break;
+    case 'tech':
+      fun.handleNews(addLine);
+      break;
+    case 'trivia':
+      fun.handleTrivia(addLine);
+      break;
+    case 'commits':
+      fun.handleCommits(addLine, addLines);
+      break;
+    case 'status':
+      fun.handleStatus(addLine);
+      break;
+    case 'hack':
+      fun.handleHack(addLine, addLines);
+      break;
 
     // --- Basic bash aliases ---
     case 'time':
     case 'date':
       addLine({ type: 'output', text: ` ${new Date().toString()}` });
       break;
-    case 'ls': addLine({ type: 'output', text: ` <span class="t-cyan">src/</span>  <span class="t-cyan">public/</span>  <span class="t-white">README.md</span>  <span class="t-white">package.json</span>` }); break;
-    case 'pwd': addLine({ type: 'output', text: ` /home/visitor` }); break;
-    case 'cd': addLine({ type: 'output', text: args === 'secret' ? ` <span class="t-red">bash: cd: secret: Permission denied</span>` : `` }); break;
+    case 'ls':
+      addLine({
+        type: 'output',
+        text: ` <span class="t-cyan">src/</span>  <span class="t-cyan">public/</span>  <span class="t-white">README.md</span>  <span class="t-white">package.json</span>`,
+      });
+      break;
+    case 'pwd':
+      addLine({ type: 'output', text: ` /home/visitor` });
+      break;
+    case 'cd':
+      addLine({
+        type: 'output',
+        text: args === 'secret' ? ` <span class="t-red">bash: cd: secret: Permission denied</span>` : ``,
+      });
+      break;
     case 'cat':
       if (args === 'readme.md') addLine({ type: 'output', text: ` <span class="t-dim">There is no spoon.</span>` });
-      else addLine({ type: 'output', text: ` <span class="t-red">cat: ${sanitizeHTML(args)}: No such file or directory</span>` });
+      else
+        addLine({
+          type: 'output',
+          text: ` <span class="t-red">cat: ${sanitizeHTML(args)}: No such file or directory</span>`,
+        });
       break;
-    case 'ping': addLine({ type: 'output', text: ` PONG! <span class="t-dim">Connection is stable.</span>` }); break;
+    case 'ping':
+      addLine({ type: 'output', text: ` PONG! <span class="t-dim">Connection is stable.</span>` });
+      break;
     case 'hello':
     case 'hi':
-    case 'hey': addLine({ type: 'output', text: ` Hello, ${visitorName}! Type '<span class="t-green">help</span>' to see what you can do here.` }); break;
-    case '42': addLine({ type: 'output', text: ` Ah, the answer to the ultimate question of life, the universe, and everything.` }); break;
+    case 'hey':
+      addLine({
+        type: 'output',
+        text: ` Hello, ${visitorName}! Type '<span class="t-green">help</span>' to see what you can do here.`,
+      });
+      break;
+    case '42':
+      addLine({
+        type: 'output',
+        text: ` Ah, the answer to the ultimate question of life, the universe, and everything.`,
+      });
+      break;
 
     default:
-      addLine({ type: 'output', text: ` <span class="t-red">bash: command not found: ${sanitizeHTML(baseCmd)}</span>` });
+      addLine({
+        type: 'output',
+        text: ` <span class="t-red">bash: command not found: ${sanitizeHTML(baseCmd)}</span>`,
+      });
       addLine({ type: 'output', text: ` Type '<span class="t-green">help</span>' to see available commands.` });
   }
 }
