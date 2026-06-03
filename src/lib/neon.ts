@@ -14,7 +14,8 @@ export async function trackEvent(options: TrackOptions = {}): Promise<void> {
   const { event_type = 'page_view', metadata = {}, visitor_alias = 'anonymous' } = options;
 
   try {
-    await fetch('/api/analytics/track', {
+    const API_URL = import.meta.env.DEV ? 'https://dino-s-portfolio.vercel.app' : '';
+    await fetch(`${API_URL}/api/analytics/track`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event_type, metadata, visitor_alias }),

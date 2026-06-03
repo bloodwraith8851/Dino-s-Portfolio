@@ -58,10 +58,10 @@ interface ProjectCardProps {
   project: ProjectData;
   index: number;
   total: number;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef?: React.RefObject<HTMLDivElement>;
 }
 
-const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) => {
+const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [likes, setLikes] = useState(0);
 
@@ -83,13 +83,14 @@ const ProjectCard = ({ project, index, total, containerRef }: ProjectCardProps) 
   const handleLike = async () => {
     setLikes(l => l + 1); // Optimistic UI
     try {
-      const res = await fetch('/api/projects/like', {
+      const API_URL = import.meta.env.DEV ? 'https://dino-s-portfolio.vercel.app' : '';
+      const res = await fetch(`${API_URL}/api/projects/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: project.number }),
       });
       if (!res.ok) {
-        const { error } = await res.json();
+        await res.json();
         if (res.status === 429) {
           // Rate limited — revert optimistic update
           setLikes(l => Math.max(0, l - 1));

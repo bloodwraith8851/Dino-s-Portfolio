@@ -77,11 +77,7 @@ function getCityCoords(city: string): [number, number] | null {
   return found ? found[1] : null;
 }
 
-interface TooltipState {
-  x: number;
-  y: number;
-  visitor: VisitorMarker;
-}
+
 
 interface VisitorMapProps {
   onClose: () => void;
@@ -89,7 +85,6 @@ interface VisitorMapProps {
 
 const VisitorMap = ({ onClose }: VisitorMapProps) => {
   const [markers, setMarkers] = useState<VisitorMarker[]>([]);
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [loaded, setLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -99,9 +94,13 @@ const VisitorMap = ({ onClose }: VisitorMapProps) => {
 
     const mapped: VisitorMarker[] = presences
       .map((p) => {
-        const coords = getCityCoords(p.city || '');
+        let coords: [number, number] | null = null;
+        if (p.lat && p.lng) {
+          coords = [p.lng, p.lat];
+        } else {
+          coords = getCityCoords(p.city || '');
+        }
         if (!coords) return null;
-        // Add slight jitter so overlapping cities don't stack perfectly
         const jitter = (): number => (Math.random() - 0.5) * 2.5;
         return {
           alias: p.alias || 'Anonymous',
@@ -134,10 +133,9 @@ const VisitorMap = ({ onClose }: VisitorMapProps) => {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97 }}
         transition={{ duration: 0.3 }}
-        className="relative w-full rounded-xl overflow-hidden border border-[#1e3a4a]/60"
+        className="relative w-full rounded-xl overflow-hidden border border-[#1e3a4a]/60 flex flex-col h-full min-h-[500px]"
         style={{
-          background: 'linear-gradient(135deg, #050d13 0%, #0a1520 50%, #050d13 100%)',
-          maxHeight: '360px',
+          background: 'linear-gradient(135deg, #050d13 0%, #0a1520 50%, #050d13 100%)'
         }}
       >
         {/* Header */}
@@ -157,7 +155,7 @@ const VisitorMap = ({ onClose }: VisitorMapProps) => {
         </div>
 
         {/* Map */}
-        <div className="relative w-full h-[300px]">
+        <div className="relative w-full flex-1">
           {loaded && (
             <GlobeMap 
               markers={markers.map(m => ({

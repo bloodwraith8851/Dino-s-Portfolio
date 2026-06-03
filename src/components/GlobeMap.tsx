@@ -28,9 +28,8 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
   // Set initial position & auto-rotate
   useEffect(() => {
     if (globeEl.current) {
-      // Auto-rotate
-      globeEl.current.controls().autoRotate = true;
-      globeEl.current.controls().autoRotateSpeed = 1.5;
+      // Auto-rotate disabled
+      globeEl.current.controls().autoRotate = false;
       
       // Position camera over India (roughly where Dino is)
       globeEl.current.pointOfView({ lat: 20.59, lng: 78.96, altitude: 2.5 }, 2000);
@@ -47,8 +46,8 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
         <strong>${m.label}</strong>
       </div>
     `,
-    color: m.active ? '#00d4ff' : '#3a5a6a',
-    size: m.active ? 1.5 : 0.5
+    color: m.active ? '#00e5ff' : '#4a6a7a',
+    size: m.active ? 2.5 : 1.0
   }));
 
   // Create arcs from server (New Delhi) to visitors
@@ -124,9 +123,9 @@ export default function GlobeMap({ markers }: GlobeMapProps) {
         ringLat="lat"
         ringLng="lng"
         ringColor="color"
-        ringMaxRadius={5}
-        ringPropagationSpeed={2}
-        ringRepeatPeriod={1000}
+        ringMaxRadius={12}
+        ringPropagationSpeed={1.5}
+        ringRepeatPeriod={800}
       />
     </div>
   );

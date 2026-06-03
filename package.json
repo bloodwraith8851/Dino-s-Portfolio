@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "prepare": "husky"
   },
   "dependencies": {
     "@fontsource/geist-sans": "^5.2.5",
@@ -27,15 +31,30 @@
     "three": "^0.184.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.9.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@types/three": "^0.184.1",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.7",
     "postcss": "^8.4.47",
+    "prettier": "^3.8.3",
     "puppeteer": "^25.1.0",
     "tailwindcss": "^3.4.13",
     "typescript": "^5.5.3",
-    "vite": "^5.4.8"
+    "vite": "^5.4.8",
+    "vitest": "^4.1.8"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }

@@ -1,9 +1,15 @@
 import { neon } from '@neondatabase/serverless';
 
-const NEON_URL = 'postgresql://neondb_owner:npg_O1GjbMhur9xQ@ep-tiny-water-aopw9601-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+// Usage: NEON_DATABASE_URL=<your-neon-connection-string> node scripts/setup-neon.mjs
+
+if (!process.env.NEON_DATABASE_URL) {
+  console.error('❌ NEON_DATABASE_URL environment variable is required.');
+  console.error('   Usage: NEON_DATABASE_URL=<url> node scripts/setup-neon.mjs');
+  process.exit(1);
+}
 
 async function setupSchema() {
-  const sql = neon(NEON_URL);
+  const sql = neon(process.env.NEON_DATABASE_URL);
 
   console.log('Creating Neon DB schema...');
 

@@ -5,6 +5,28 @@ export const config = { runtime: 'edge' };
 const INNGEST_EVENT_KEY = process.env.INNGEST_EVENT_KEY ?? '';
 const INNGEST_API = 'https://inn.gs/e/';
 
+/** Maximum allowed lengths for user-provided fields */
+const MAX_NAME_LENGTH = 500;
+const MAX_MESSAGE_LENGTH = 500;
+const MAX_EMAIL_LENGTH = 254;
+
+/**
+ * Strips HTML tags from a string to prevent injection.
+ */
+function stripHtml(input: string): string {
+  return input.replace(/<[^>]*>/g, '');
+}
+
+/**
+ * Sanitizes and validates a string field. Returns the sanitized value or null if invalid.
+ */
+function sanitizeField(value: unknown, maxLength: number): string | null {
+  if (typeof value !== 'string') return null;
+  const cleaned = stripHtml(value).trim();
+  if (cleaned.length > maxLength) return null;
+  return cleaned;
+}
+
 async function sendInngestEvent(name: string, data: Record<string, any>) {
   if (!INNGEST_EVENT_KEY || INNGEST_EVENT_KEY.length < 10) return false;
   try {
@@ -68,6 +90,43 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response(JSON.stringify({ error: 'Invalid notification type' }), { status: 400 });
     }
 
+    // --- Input length validation & HTML sanitization ---
+    const validationErrors: string[] = [];
+
+    if (data.name !== undefined) {
+      const sanitized = sanitizeField(data.name, MAX_NAME_LENGTH);
+      if (sanitized === null) {
+        validationErrors.push(`name must be a string of at most ${MAX_NAME_LENGTH} characters`);
+      } else {
+        data.name = sanitized;
+      }
+    }
+
+    if (data.message !== undefined) {
+      const sanitized = sanitizeField(data.message, MAX_MESSAGE_LENGTH);
+      if (sanitized === null) {
+        validationErrors.push(`message must be a string of at most ${MAX_MESSAGE_LENGTH} characters`);
+      } else {
+        data.message = sanitized;
+      }
+    }
+
+    if (data.email !== undefined) {
+      const sanitized = sanitizeField(data.email, MAX_EMAIL_LENGTH);
+      if (sanitized === null) {
+        validationErrors.push(`email must be a string of at most ${MAX_EMAIL_LENGTH} characters`);
+      } else {
+        data.email = sanitized;
+      }
+    }
+
+    if (validationErrors.length > 0) {
+      return new Response(JSON.stringify({ error: 'Validation failed', details: validationErrors }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
     // ONLY send to Inngest as requested by user
     if (type === 'hire') {
       await sendInngestEvent('portfolio/hire.message', { ...data, ip, timestamp });
@@ -88,4 +147,3 @@ export default async function handler(req: Request): Promise<Response> {
     });
   }
 }
-

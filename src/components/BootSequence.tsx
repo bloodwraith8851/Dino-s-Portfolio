@@ -69,14 +69,24 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
     return () => clearTimeout(timeoutId);
   }, [onComplete]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isFading) {
+        onComplete();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFading, onComplete]);
+
   return (
     <motion.div 
       initial={{ opacity: 1 }}
       animate={{ opacity: isFading ? 0 : 1 }}
       transition={{ duration: 0.5 }}
-      className="fixed inset-0 bg-[#0C0C0C] z-[9999] flex flex-col font-mono text-[13px] md:text-[14px] text-[#D7E2EA] p-4 md:p-8 overflow-hidden pointer-events-none"
+      className="fixed inset-0 bg-[#0C0C0C] z-[9999] flex flex-col font-mono text-[13px] md:text-[14px] text-[#D7E2EA] p-4 md:p-8 overflow-hidden"
     >
-      <div className="flex-1 flex flex-col justify-end">
+      <div className="flex-1 flex flex-col justify-end pointer-events-none">
         {lines.map((line, i) => (
           <motion.div 
             key={i} 
@@ -94,6 +104,15 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
           <div className="h-5 w-2.5 bg-[#D7E2EA] mt-1 animate-pulse" />
         )}
       </div>
+      
+      {!isFading && (
+        <button
+          onClick={onComplete}
+          className="absolute bottom-4 right-4 md:bottom-8 md:right-8 text-neutral-500 hover:text-white px-4 py-2 border border-neutral-800 hover:border-neutral-600 rounded transition-colors"
+        >
+          Skip Boot [ESC]
+        </button>
+      )}
     </motion.div>
   );
 }
