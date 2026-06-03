@@ -27,9 +27,7 @@ window.__VISITOR_PRESENCE__ = [];
 
 const App = () => {
   const [isBanned, setIsBanned] = useState<boolean | null>(null);
-  const [showBoot, setShowBoot] = useState<boolean>(
-    !sessionStorage.getItem('hasBooted')
-  );
+  const [showBoot, setShowBoot] = useState<boolean>(!sessionStorage.getItem('hasBooted'));
 
   useEffect(() => {
     /* 0. Check for Banned IP (with retry) */
@@ -38,7 +36,7 @@ const App = () => {
         const res = await fetch('https://ipapi.co/json/');
         const data = await res.json();
         if (data.ip) {
-          const { data: banData } = await supabase.from('banned_ips').select('ip').eq('ip', data.ip).single();
+          const { data: banData } = await supabase.from('banned_ips').select('ip').eq('ip', data.ip).maybeSingle();
           if (banData) {
             setIsBanned(true);
             return;
@@ -52,7 +50,7 @@ const App = () => {
       } catch {
         // Retry once after 2 seconds before giving up
         try {
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise((r) => setTimeout(r, 2000));
           await attemptBanCheck();
         } catch {
           // If both attempts fail, allow access (fail-open)
@@ -64,7 +62,7 @@ const App = () => {
 
     /* 1. Track Active Visitors globally via Supabase Presence */
     const channel = supabase.channel('global_visitors');
-    
+
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
@@ -81,12 +79,16 @@ const App = () => {
         if (status === 'SUBSCRIBED') {
           const stored = localStorage.getItem('visitorName');
           let alias = stored || 'Anonymous Node';
-          let ip = 'Unknown'; let city = 'Unknown'; let org = 'ISP'; let lat = 0; let lng = 0;
+          let ip = 'Unknown';
+          let city = 'Unknown';
+          let org = 'ISP';
+          let lat = 0;
+          let lng = 0;
           try {
             const ipRes = await fetch('https://api.ipify.org?format=json');
             const ipData = await ipRes.json();
             if (ipData.ip) ip = ipData.ip;
-            
+
             try {
               const geoRes = await fetch(`https://ipinfo.io/${ip}/json`);
               const geoData = await geoRes.json();
@@ -94,9 +96,10 @@ const App = () => {
               if (geoData.org) org = geoData.org.replace(/^AS\d+\s/, '').substring(0, 15);
               if (geoData.loc) {
                 const [lt, lg] = geoData.loc.split(',');
-                lat = parseFloat(lt); lng = parseFloat(lg);
+                lat = parseFloat(lt);
+                lng = parseFloat(lg);
               }
-            } catch(e) {
+            } catch (e) {
               try {
                 const geoRes2 = await fetch(`https://ipapi.co/${ip}/json/`);
                 const geoData2 = await geoRes2.json();
@@ -104,12 +107,12 @@ const App = () => {
                 if (geoData2.org) org = geoData2.org.substring(0, 15);
                 if (geoData2.latitude) lat = parseFloat(geoData2.latitude);
                 if (geoData2.longitude) lng = parseFloat(geoData2.longitude);
-              } catch(err) {}
+              } catch (err) {}
             }
-            
+
             (window as any).__GEO_DATA__ = { ip, city, org, lat, lng };
             if (!stored && city !== 'Unknown') alias = `${city} Visitor`;
-          } catch(e) {}
+          } catch (e) {}
           await channel.track({ alias, online_at: new Date().toISOString(), ip, city, org, lat, lng });
         }
       });
@@ -118,7 +121,15 @@ const App = () => {
     const handleIdentity = async (e: any) => {
       if (channel.state === 'joined') {
         const geo = (window as any).__GEO_DATA__ || { ip: 'Unknown', city: 'Unknown', org: 'ISP', lat: 0, lng: 0 };
-        await channel.track({ alias: e.detail, online_at: new Date().toISOString(), ip: geo.ip, city: geo.city, org: geo.org, lat: geo.lat, lng: geo.lng });
+        await channel.track({
+          alias: e.detail,
+          online_at: new Date().toISOString(),
+          ip: geo.ip,
+          city: geo.city,
+          org: geo.org,
+          lat: geo.lat,
+          lng: geo.lng,
+        });
       }
     };
     window.addEventListener('identity_updated', handleIdentity);
@@ -148,8 +159,8 @@ const App = () => {
         <h2 className="text-xl md:text-2xl text-red-400">ACCESS FORBIDDEN</h2>
         <div className="max-w-lg mt-4 border border-red-900/50 bg-red-950/20 p-6 rounded-lg">
           <p className="text-sm md:text-base text-gray-400">
-            Your IP address has been permanently banned from accessing this server.
-            If you believe this is an error, please contact the administrator.
+            Your IP address has been permanently banned from accessing this server. If you believe this is an error,
+            please contact the administrator.
           </p>
         </div>
       </div>
@@ -162,23 +173,38 @@ const App = () => {
   return (
     <>
       {showBoot && (
-        <BootSequence onComplete={() => {
-          setShowBoot(false);
-          sessionStorage.setItem('hasBooted', 'true');
-        }} />
+        <BootSequence
+          onComplete={() => {
+            setShowBoot(false);
+            sessionStorage.setItem('hasBooted', 'true');
+          }}
+        />
       )}
-      
-      <main
-        className="relative w-full"
-        style={{ overflowX: 'clip', background: 'var(--bg-color)' }}
-      >
-          <ErrorBoundary><HeroSection /></ErrorBoundary>
-          <ErrorBoundary><AboutSection /></ErrorBoundary>
-          <ErrorBoundary><ServicesSection /></ErrorBoundary>
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-neutral-500 font-mono">Loading module...</div>}>
-            <ErrorBoundary><ProjectsSection /></ErrorBoundary>
-            <ErrorBoundary><ContactSection /></ErrorBoundary>
-          </Suspense>
+
+      <main className="relative w-full" style={{ overflowX: 'clip', background: 'var(--bg-color)' }}>
+        <ErrorBoundary>
+          <HeroSection />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <AboutSection />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <ServicesSection />
+        </ErrorBoundary>
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center text-neutral-500 font-mono">
+              Loading module...
+            </div>
+          }
+        >
+          <ErrorBoundary>
+            <ProjectsSection />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <ContactSection />
+          </ErrorBoundary>
+        </Suspense>
       </main>
     </>
   );

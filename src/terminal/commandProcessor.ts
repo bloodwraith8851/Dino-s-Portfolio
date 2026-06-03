@@ -94,9 +94,13 @@ export async function processCommand(
   // 3. Telemetry Logging (for normal commands)
   const isExcluded = ['sudo', 'su', 'login', 'admin', 'hire'].includes(lowCmd);
   if (!isAdmin && !isExcluded && lowCmd) {
-    Promise.resolve(
-      supabase.from('command_logs').insert([{ visitor_alias: visitorName || 'Anonymous', command: cmd }]),
-    ).catch(() => {});
+    (async () => {
+      try {
+        await supabase.from('command_logs').insert([{ visitor_alias: visitorName || 'Anonymous', command: cmd }]);
+      } catch {
+        /* table may not exist — silently skip */
+      }
+    })();
   }
 
   // 4. Command Router
