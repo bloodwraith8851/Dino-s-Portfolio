@@ -52,7 +52,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       return this.props.fallback;
     }
 
-    const isDev = (import.meta as any).env?.DEV || process.env.NODE_ENV === 'development';
+    const isDev = true; // Temporary debug for production crash
 
     return (
       <div
@@ -85,9 +85,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
         {isDev && this.state.error && (
           <div style={{ marginBottom: '1rem' }}>
-            <p style={{ color: '#ff9999', fontSize: '0.85rem', margin: '0 0 0.5rem 0' }}>
-              {this.state.error.message}
-            </p>
+            <p style={{ color: '#ff9999', fontSize: '0.85rem', margin: '0 0 0.5rem 0' }}>{this.state.error.message}</p>
             {this.state.error.stack && (
               <pre
                 style={{
