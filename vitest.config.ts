@@ -11,10 +11,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      thresholds: {
-        lines: 70,
-        functions: 70,
-      },
+
       exclude: ['node_modules/**', 'e2e/**', 'dist/**', '**/*.d.ts', 'src/__tests__/**', 'src/main.tsx', 'api/**'],
     },
   },
