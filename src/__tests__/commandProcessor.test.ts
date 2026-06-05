@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { processCommand } from '../terminal/commandProcessor';
 import type { CommandContext } from '../terminal/types';
 
@@ -35,6 +35,10 @@ describe('processCommand', () => {
     logout: vi.fn(),
   };
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('handles empty input', async () => {
     await processCommand('', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
     expect(mockAddLine).not.toHaveBeenCalled();
@@ -43,9 +47,11 @@ describe('processCommand', () => {
   it('registers identity on first time', async () => {
     await processCommand('John', defaultCtx, defaultActions, { isFirstTime: true, isHelpMode: false });
     expect(defaultActions.setVisitorName).toHaveBeenCalledWith('John');
-    expect(mockAddLine).toHaveBeenCalledWith(expect.objectContaining({
-      text: expect.stringContaining('Identity confirmed'),
-    }));
+    expect(mockAddLine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining('Identity confirmed'),
+      }),
+    );
   });
 
   it('handles help mode interactions', async () => {
@@ -60,24 +66,30 @@ describe('processCommand', () => {
 
   it('routes about command', async () => {
     await processCommand('about', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
-    expect(mockAddLine).toHaveBeenCalledWith(expect.objectContaining({
-      text: expect.stringContaining('Rakesh Sarkar'),
-    }));
+    expect(mockAddLine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining('Rakesh Sarkar'),
+      }),
+    );
   });
 
   it('denies admin command to non-admin', async () => {
     await processCommand('admin', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
-    expect(mockAddLine).toHaveBeenCalledWith(expect.objectContaining({
-      text: expect.stringContaining('Permission denied'),
-    }));
+    expect(mockAddLine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining('Permission denied'),
+      }),
+    );
   });
 
   it('allows admin command to admin', async () => {
     const adminCtx = { ...defaultCtx, isAdmin: true };
     await processCommand('admin', adminCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
-    expect(mockAddLine).toHaveBeenCalledWith(expect.objectContaining({
-      text: expect.stringContaining('Admin Tools:'),
-    }));
+    expect(mockAddLine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining('Admin Tools:'),
+      }),
+    );
   });
 
   it('triggers clear action', async () => {
@@ -89,5 +101,43 @@ describe('processCommand', () => {
   it('triggers hire wizard', async () => {
     await processCommand('hire', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
     expect(defaultActions.initiateHire).toHaveBeenCalled();
+  });
+
+  // --- New test cases ---
+
+  it('prints command not found for unknown command', async () => {
+    await processCommand('foobarxyz', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
+    expect(mockAddLine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining('command not found'),
+      }),
+    );
+  });
+
+  it('weather command calls addLine with output', async () => {
+    await processCommand('weather', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
+    // weather is async (API call) — just verify addLine was eventually called
+    // The actual text depends on the API but should contain some output
+    expect(mockAddLine).toHaveBeenCalled();
+  });
+
+  it('chat command triggers enterChat', async () => {
+    await processCommand('chat', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
+    expect(defaultActions.enterChat).toHaveBeenCalledOnce();
+  });
+
+  it('snake command triggers setSnakeMode(true)', async () => {
+    await processCommand('snake', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
+    expect(defaultActions.setSnakeMode).toHaveBeenCalledWith(true);
+  });
+
+  it('map command triggers setMapMode(true)', async () => {
+    await processCommand('map', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
+    expect(defaultActions.setMapMode).toHaveBeenCalledWith(true);
+  });
+
+  it('help command triggers setHelpMode(true)', async () => {
+    await processCommand('help', defaultCtx, defaultActions, { isFirstTime: false, isHelpMode: false });
+    expect(defaultActions.setHelpMode).toHaveBeenCalledWith(true);
   });
 });

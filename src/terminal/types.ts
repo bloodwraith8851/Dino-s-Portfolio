@@ -2,6 +2,8 @@
  * Core type definitions for the terminal system.
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 /** A single line rendered in the terminal output. */
 export type Line = {
   type: 'command' | 'output' | 'ascii';
@@ -38,6 +40,6 @@ export interface CommandContext {
   isAdmin: boolean;
   visitorName: string;
   history: string[];
-  supabase: any;
+  supabase: SupabaseClient;
   sanitizeHTML: (str: string) => string;
 }

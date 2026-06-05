@@ -55,7 +55,7 @@ export function useTerminalCore(_visitorName: string) {
 
   // Boot Sequence Effect
   useEffect(() => {
-    let timeoutIds: NodeJS.Timeout[] = [];
+    const timeoutIds: NodeJS.Timeout[] = [];
     let cumulativeDelay = 0;
 
     BOOT.forEach((step) => {

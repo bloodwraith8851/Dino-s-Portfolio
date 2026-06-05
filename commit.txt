@@ -1,0 +1,9 @@
+refactor: implement architectural and performance improvements
+
+- Extracted complex terminal logic into dedicated custom hooks (useBanCheck, usePresence)
+- Enforced strict TypeScript mode, eliminating arbitrary any typings
+- Resolved React hooks linting issues via memoization and immutability refactors
+- Eliminated dead code (unused components, exports, and npm packages) via Knip
+- Fortified security with DOMPurify sanitization and strict CSP headers
+- Documented terminal and npm commands in README.md
+- Expanded test coverage and verified zero-lint-warning builds

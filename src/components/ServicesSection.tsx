@@ -1,5 +1,5 @@
+import React from 'react';
 import FadeIn from './FadeIn';
-
 
 const SERVICES = [
   {
@@ -34,6 +34,10 @@ const SERVICES = [
   },
 ];
 
+/**
+ * Services section listing the five main service offerings with
+ * animated fade-in rows and an underline hover effect on each title.
+ */
 const ServicesSection = () => {
   return (
     <section
@@ -56,9 +60,7 @@ const ServicesSection = () => {
               className="flex flex-row items-start gap-6 sm:gap-10 md:gap-14 py-8 sm:py-10 md:py-12"
               style={{
                 borderTop: '1px solid rgba(12, 12, 12, 0.15)',
-                ...(i === SERVICES.length - 1
-                  ? { borderBottom: '1px solid rgba(12, 12, 12, 0.15)' }
-                  : {}),
+                ...(i === SERVICES.length - 1 ? { borderBottom: '1px solid rgba(12, 12, 12, 0.15)' } : {}),
               }}
             >
               <div
@@ -94,4 +96,4 @@ const ServicesSection = () => {
   );
 };
 
-export default ServicesSection;
+export default React.memo(ServicesSection);

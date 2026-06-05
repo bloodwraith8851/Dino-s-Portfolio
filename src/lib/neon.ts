@@ -6,7 +6,7 @@
 
 interface TrackOptions {
   event_type?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   visitor_alias?: string;
 }
 

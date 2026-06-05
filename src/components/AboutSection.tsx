@@ -1,3 +1,4 @@
+import React from 'react';
 import FadeIn from './FadeIn';
 import ContactButton from './ContactButton';
 import AnimatedText from './AnimatedText';
@@ -5,6 +6,10 @@ import AnimatedText from './AnimatedText';
 const ABOUT_TEXT =
   "I'm a B.Tech Artificial Intelligence student at IIT Bombay and a software developer passionate about building scalable, customer-facing digital products. I focus on full-stack development, Android development, UI/UX design, and GenAI integration — turning ambitious ideas into polished, engaging, high-performance digital experiences. Let’s build something incredible together!";
 
+/**
+ * About section with animated bio text, skills grid, and CTA.
+ * Renders decorative 3D model images in each corner.
+ */
 const AboutSection = () => {
   return (
     <section
@@ -86,7 +91,6 @@ const AboutSection = () => {
             About me
           </h2>
         </FadeIn>
-
         <div className="flex flex-col items-center gap-12 sm:gap-16 md:gap-20">
           <AnimatedText
             text={ABOUT_TEXT}
@@ -104,7 +108,16 @@ const AboutSection = () => {
                 },
                 {
                   label: 'Frameworks & Technologies',
-                  items: ['React', 'Next.js', 'React Native', 'Node.js', 'Express.js', 'Tailwind CSS', 'TensorFlow Lite', 'discord.py'],
+                  items: [
+                    'React',
+                    'Next.js',
+                    'React Native',
+                    'Node.js',
+                    'Express.js',
+                    'Tailwind CSS',
+                    'TensorFlow Lite',
+                    'discord.py',
+                  ],
                 },
                 {
                   label: 'Developer Tools',
@@ -112,13 +125,17 @@ const AboutSection = () => {
                 },
                 {
                   label: 'AI / GenAI',
-                  items: ['OpenAI API', 'Gemini', 'Claude', 'Prompt Engineering', 'AI Product Integration', 'Machine Learning'],
+                  items: [
+                    'OpenAI API',
+                    'Gemini',
+                    'Claude',
+                    'Prompt Engineering',
+                    'AI Product Integration',
+                    'Machine Learning',
+                  ],
                 },
               ].map((group) => (
-                <div
-                  key={group.label}
-                  className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-5"
-                >
+                <div key={group.label} className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-5">
                   <span className="text-xs uppercase tracking-widest text-[#D7E2EA]/40 sm:w-44 sm:shrink-0 sm:text-right">
                     {group.label}
                   </span>
@@ -140,9 +157,10 @@ const AboutSection = () => {
           <FadeIn delay={0.25}>
             <ContactButton />
           </FadeIn>
-        </div>      </div>
+        </div>{' '}
+      </div>
     </section>
   );
 };
 
-export default AboutSection;
+export default React.memo(AboutSection);

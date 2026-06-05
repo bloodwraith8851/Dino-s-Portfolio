@@ -1,3 +1,8 @@
+/**
+ * @file ContactSection — full-screen terminal emulator section.
+ * Handles command processing, hire wizard, auth flow, snake game,
+ * visitor map, and global chat modes.
+ */
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Terminal as TerminalIcon, Shield, Mail, FileCode2, Cpu, Globe } from 'lucide-react';
@@ -27,7 +32,7 @@ export default function ContactSection() {
 
   // Core terminal state
   const core = useTerminalCore(visitorName);
-  
+
   // Feature hooks
   const auth = useAdminAuth(core.addLine);
   const hire = useHireWizard(core.addLine, supabase, visitorName);
@@ -46,9 +51,9 @@ export default function ContactSection() {
       try {
         const { data } = await supabase.from('admin_settings').select('value').eq('key', 'motd').single();
         if (data?.value) {
-          (window as any).__MOTD__ = data.value;
+          window.__MOTD__ = data.value;
         }
-      } catch (e) {
+      } catch {
         // fail silently
       }
     };
@@ -56,67 +61,77 @@ export default function ContactSection() {
   }, [core.isBooting, core.addLine]);
 
   // Command Execution
-  const exec = useCallback(async (cmdStr: string) => {
-    const cmd = cmdStr.trim();
-    if (!cmd) return;
+  const exec = useCallback(
+    async (cmdStr: string) => {
+      const cmd = cmdStr.trim();
+      if (!cmd) return;
 
-    core.addToHistory(cmd);
-    core.addLine({ type: 'command', text: cmd, isAuth: !!auth.authStep, isHire: !!hire.hireStep, isAdmin: auth.isAdmin });
+      core.addToHistory(cmd);
+      core.addLine({
+        type: 'command',
+        text: cmd,
+        isAuth: !!auth.authStep,
+        isHire: !!hire.hireStep,
+        isAdmin: auth.isAdmin,
+      });
 
-    // 1. Auth password mode
-    if (auth.authStep === 'password') {
-      await auth.handlePasswordSubmit(cmd);
-      return;
-    }
+      // 1. Auth password mode
+      if (auth.authStep === 'password') {
+        await auth.handlePasswordSubmit(cmd);
+        return;
+      }
 
-    // 2. Chat mode
-    if (chat.isChatMode) {
-      await chat.processChatInput(cmd);
-      return;
-    }
+      // 2. Chat mode
+      if (chat.isChatMode) {
+        await chat.processChatInput(cmd);
+        return;
+      }
 
-    // 3. Hire wizard mode
-    if (hire.hireStep) {
-      await hire.processHireInput(cmd);
-      return;
-    }
+      // 3. Hire wizard mode
+      if (hire.hireStep) {
+        await hire.processHireInput(cmd);
+        return;
+      }
 
-    // 4. Standard command processing
-    const isFirstTime = !localStorage.getItem('visitor_alias') && !core.isBooting;
-    
-    try {
-      await processCommand(
-        cmdStr,
-        {
-          addLine: core.addLine,
-          addLines: core.addLines,
-          isAdmin: auth.isAdmin,
-          visitorName,
-          history: core.history,
-          supabase,
-          sanitizeHTML
-        },
-        {
-          clearLines: core.clearLines,
-          setVisitorName,
-          initiateAuth: auth.initiateAuth,
-          initiateHire: hire.initiateHire,
-          enterChat: chat.enterChat,
-          toggleLogs: feeds.toggleLogs,
-          toggleWatch: feeds.toggleWatch,
-          disableAllFeeds: feeds.disableAll,
-          setSnakeMode: setIsSnakeMode,
-          setMapMode: setIsMapMode,
-          setHelpMode: setIsHelpMode,
-          logout: auth.logout
-        },
-        { isFirstTime, isHelpMode }
-      );
-    } catch (err: any) {
-      core.addLine({ type: 'output', text: ` <span class="t-red">EXEC ERROR: ${err?.message || 'Unknown error'}</span>` });
-      console.error(err);
-    }
-  }, [core, auth, chat, hire, visitorName, isHelpMode, feeds]);
+      // 4. Standard command processing
+      const isFirstTime = !localStorage.getItem('visitor_alias') && !core.isBooting;
+
+      try {
+        await processCommand(
+          cmdStr,
+          {
+            addLine: core.addLine,
+            addLines: core.addLines,
+            isAdmin: auth.isAdmin,
+            visitorName,
+            history: core.history,
+            supabase,
+            sanitizeHTML,
+          },
+          {
+            clearLines: core.clearLines,
+            setVisitorName,
+            initiateAuth: auth.initiateAuth,
+            initiateHire: hire.initiateHire,
+            enterChat: chat.enterChat,
+            toggleLogs: feeds.toggleLogs,
+            toggleWatch: feeds.toggleWatch,
+            disableAllFeeds: feeds.disableAll,
+            setSnakeMode: setIsSnakeMode,
+            setMapMode: setIsMapMode,
+            setHelpMode: setIsHelpMode,
+            logout: auth.logout,
+          },
+          { isFirstTime, isHelpMode },
+        );
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        core.addLine({ type: 'output', text: ` <span class="t-red">EXEC ERROR: ${message}</span>` });
+        console.error(err);
+      }
+    },
+    [core, auth, chat, hire, visitorName, isHelpMode, feeds],
+  );
 
   // Key Handlers
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -151,7 +166,6 @@ export default function ContactSection() {
 
   return (
     <section id="contact" className="min-h-screen py-24 relative z-10 font-mono flex flex-col pt-24 bg-[#050505]">
-      
       {/* Header */}
       <div className="text-center mb-16 relative z-10">
         <h2 className="text-5xl md:text-7xl font-bold mb-6 tracking-tighter">
@@ -167,23 +181,32 @@ export default function ContactSection() {
       {/* Terminal Container */}
       <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 relative mb-24 z-20">
         {/* Glow effect */}
-        <motion.div style={{ opacity, scale }} className="absolute -inset-1 bg-gradient-to-r from-emerald-900/40 to-blue-900/40 rounded-2xl blur-2xl transition-all duration-1000 group-hover:from-emerald-800/40 group-hover:to-blue-800/40 pointer-events-none" />
-        
-        <motion.div style={{ y, scale, opacity }} className="relative bg-[#050505] rounded-xl border border-white/10 shadow-2xl overflow-hidden flex flex-col h-[80vh] min-h-[600px] terminal-body">
+        <motion.div
+          style={{ opacity, scale }}
+          className="absolute -inset-1 bg-gradient-to-r from-emerald-900/40 to-blue-900/40 rounded-2xl blur-2xl transition-all duration-1000 group-hover:from-emerald-800/40 group-hover:to-blue-800/40 pointer-events-none"
+        />
+
+        <motion.div
+          style={{ y, scale, opacity }}
+          className="relative bg-[#050505] rounded-xl border border-white/10 shadow-2xl overflow-hidden flex flex-col h-[80vh] min-h-[600px] terminal-body"
+        >
           <TerminalTitleBar />
 
           {/* Terminal Body */}
-          <div className="flex-1 p-4 overflow-y-auto font-mono text-sm sm:text-base scroll-smooth relative" onClick={() => !isSnakeMode && !isMapMode && core.bottomRef.current?.scrollIntoView()}>
+          <div
+            className="flex-1 p-4 overflow-y-auto font-mono text-sm sm:text-base scroll-smooth relative"
+            onClick={() => !isSnakeMode && !isMapMode && core.bottomRef.current?.scrollIntoView()}
+          >
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_50%,transparent_50%)] bg-[length:100%_4px] pointer-events-none z-50 opacity-50 mix-blend-overlay" />
-            
+
             {isSnakeMode ? (
               <Suspense fallback={<div className="text-neutral-500 p-4">Loading Snake Game...</div>}>
-                <SnakeGame 
+                <SnakeGame
                   onExit={() => {
                     setIsSnakeMode(false);
                     core.addLine({ type: 'output', text: ` <span class="t-dim">Exited Snake Game.</span>` });
-                  }} 
-                  visitorName={visitorName || 'visitor'} 
+                  }}
+                  visitorName={visitorName || 'visitor'}
                 />
               </Suspense>
             ) : isMapMode ? (
@@ -199,7 +222,7 @@ export default function ContactSection() {
                 ))}
 
                 {!core.isBooting && (
-                  <TerminalInput 
+                  <TerminalInput
                     input={core.input}
                     setInput={core.setInput}
                     onEnter={handleEnter}
@@ -211,7 +234,7 @@ export default function ContactSection() {
                       isChatMode: chat.isChatMode,
                       alias: visitorName,
                       isFirstTime: !localStorage.getItem('visitor_alias'),
-                      isAdmin: auth.isAdmin
+                      isAdmin: auth.isAdmin,
                     }}
                   />
                 )}
@@ -223,19 +246,49 @@ export default function ContactSection() {
           {/* Bottom Hint Bar */}
           <div className="bg-[#111] border-t border-white/5 p-2 flex flex-wrap gap-2 text-xs sm:text-sm text-neutral-500 font-mono shrink-0 justify-between items-center px-4">
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => exec('help')} className="hover:text-green-400 transition-colors flex items-center gap-1"><TerminalIcon size={14}/> help</button>
+              <button
+                onClick={() => exec('help')}
+                className="hover:text-green-400 transition-colors flex items-center gap-1"
+              >
+                <TerminalIcon size={14} /> help
+              </button>
               <span className="hidden sm:inline opacity-30">|</span>
-              <button onClick={() => exec('contact')} className="hover:text-cyan-400 transition-colors flex items-center gap-1"><Mail size={14}/> contact</button>
+              <button
+                onClick={() => exec('contact')}
+                className="hover:text-cyan-400 transition-colors flex items-center gap-1"
+              >
+                <Mail size={14} /> contact
+              </button>
               <span className="hidden sm:inline opacity-30">|</span>
-              <button onClick={() => exec('hire')} className="hover:text-yellow-400 transition-colors flex items-center gap-1"><Shield size={14}/> hire</button>
+              <button
+                onClick={() => exec('hire')}
+                className="hover:text-yellow-400 transition-colors flex items-center gap-1"
+              >
+                <Shield size={14} /> hire
+              </button>
               <span className="hidden sm:inline opacity-30">|</span>
-              <button onClick={() => exec('skills')} className="hover:text-purple-400 transition-colors flex items-center gap-1"><FileCode2 size={14}/> skills</button>
+              <button
+                onClick={() => exec('skills')}
+                className="hover:text-purple-400 transition-colors flex items-center gap-1"
+              >
+                <FileCode2 size={14} /> skills
+              </button>
             </div>
-            
+
             <div className="flex flex-wrap gap-2 text-neutral-600">
-              <button onClick={() => exec('joke')} className="hover:text-white transition-colors flex items-center gap-1"><Cpu size={14}/> joke</button>
+              <button
+                onClick={() => exec('joke')}
+                className="hover:text-white transition-colors flex items-center gap-1"
+              >
+                <Cpu size={14} /> joke
+              </button>
               <span className="opacity-30">|</span>
-              <button onClick={() => exec('matrix')} className="hover:text-green-500 transition-colors flex items-center gap-1"><Globe size={14}/> matrix</button>
+              <button
+                onClick={() => exec('matrix')}
+                className="hover:text-green-500 transition-colors flex items-center gap-1"
+              >
+                <Globe size={14} /> matrix
+              </button>
             </div>
           </div>
         </motion.div>

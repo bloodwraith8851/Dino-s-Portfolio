@@ -45,7 +45,8 @@ test.describe('Terminal Commands', () => {
     await terminalInput.press('Enter');
 
     // Actual ABOUT_TEXT starts with "Hi, my name is Rakesh Sarkar"
-    await expect(page.getByText('Rakesh Sarkar', { exact: false })).toBeVisible({ timeout: 10000 });
+    // Use .first() to avoid strict mode violation when text appears in multiple elements
+    await expect(page.getByText('Rakesh Sarkar', { exact: false }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('executes clear command', async ({ page }) => {
@@ -54,13 +55,14 @@ test.describe('Terminal Commands', () => {
     // First run about to generate output
     await terminalInput.fill('about');
     await terminalInput.press('Enter');
-    await expect(page.getByText('full-stack developer', { exact: false })).toBeVisible({ timeout: 10000 });
+    // Use .first() to avoid strict mode violation when text appears in multiple elements
+    await expect(page.getByText('full-stack developer', { exact: false }).first()).toBeVisible({ timeout: 10000 });
 
     // Then clear
     await terminalInput.fill('clear');
     await terminalInput.press('Enter');
 
     // The about output should be gone
-    await expect(page.getByText('full-stack developer', { exact: false })).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('full-stack developer', { exact: false }).first()).not.toBeVisible({ timeout: 5000 });
   });
 });

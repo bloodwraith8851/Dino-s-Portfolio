@@ -4,7 +4,7 @@
  */
 
 /* ─── ASCII art ──────────────────────────────────────────────────── */
-export const ASCII_NAME = `
+const ASCII_NAME = `
  ██████╗  █████╗ ██╗  ██╗███████╗███████╗██╗  ██╗
  ██╔══██╗██╔══██╗██║ ██╔╝██╔════╝██╔════╝██║  ██║
  ██████╔╝███████║█████╔╝ █████╗  ███████╗███████║
@@ -52,16 +52,6 @@ export const FLIP_ART = `
 
  <span class="t-dim">Table flipped! Frustration level: over 9000!</span>
  <span class="t-yellow">┬─┬ ノ( ゜-゜ノ)</span>  <span class="t-dim">...okay, putting it back.</span>`;
-
-export const HACK_LINES = [
-  'Accessing mainframe...',
-  'Bypassing firewall ████████░░ 78%',
-  'Decrypting passwords... ██████████ 100%',
-  'Downloading internet...',
-  'Injecting CSS into the Matrix...',
-  'Reticulating splines...',
-  'Compiling quantum flux capacitor...',
-];
 
 /* ─── help menus ─────────────────────────────────────────────────── */
 
@@ -195,7 +185,10 @@ export const ADMIN_MENU = `
 export const BOOT: { cmd?: string; out?: string; ascii?: string; d: number }[] = [
   { cmd: 'welcome', d: 0 },
   { ascii: ASCII_NAME, d: 400 },
-  { out: ` Welcome to Rakesh's terminal portfolio. <span class="t-dim">(v2.0.26)</span>\n <span class="t-dim">─────────────────────────────────────────</span>\n For a list of available commands, type '<span class="t-green">help</span>'.`, d: 100 },
+  {
+    out: ` Welcome to Rakesh's terminal portfolio. <span class="t-dim">(v2.0.26)</span>\n <span class="t-dim">─────────────────────────────────────────</span>\n For a list of available commands, type '<span class="t-green">help</span>'.`,
+    d: 100,
+  },
   { cmd: 'about', d: 700 },
   { out: ABOUT_TEXT, d: 250 },
 ];

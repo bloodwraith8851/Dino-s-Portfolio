@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FadeIn from './FadeIn';
 
 const NAV_LINKS = [
@@ -7,6 +7,10 @@ const NAV_LINKS = [
   { label: 'Contact', href: '#contact' },
 ];
 
+/**
+ * Full-viewport hero section with video background, navigation bar,
+ * name headline, scroll indicator, and mute toggle.
+ */
 const HeroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -34,7 +38,7 @@ const HeroSection = () => {
           }
         }
       },
-      { threshold: 0, rootMargin: '-50% 0px 0px 0px' }
+      { threshold: 0, rootMargin: '-50% 0px 0px 0px' },
     );
     observer.observe(section);
     return () => observer.disconnect();
@@ -44,12 +48,12 @@ const HeroSection = () => {
   useEffect(() => {
     let fired = false;
 
-      const goToAbout = () => {
-        if (fired) return;
-        fired = true;
-        const about = document.getElementById('about');
-        if (about) about.scrollIntoView({ behavior: 'auto', block: 'start' });
-      };
+    const goToAbout = () => {
+      if (fired) return;
+      fired = true;
+      const about = document.getElementById('about');
+      if (about) about.scrollIntoView({ behavior: 'auto', block: 'start' });
+    };
 
     const onWheel = (e: WheelEvent) => {
       if (fired) return;
@@ -138,7 +142,9 @@ const HeroSection = () => {
                 className="font-black uppercase leading-[0.88] tracking-tight text-white"
                 style={{ fontSize: 'clamp(3rem, 12vw, 10.5rem)' }}
               >
-                Rakesh<br />Sarkar
+                Rakesh
+                <br />
+                Sarkar
               </h1>
             </FadeIn>
 
@@ -184,13 +190,31 @@ const HeroSection = () => {
                 className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition-all duration-200 ease-out-custom hover:bg-white/20 active:scale-95"
               >
                 {muted ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                     <line x1="23" y1="9" x2="17" y2="15" />
                     <line x1="17" y1="9" x2="23" y2="15" />
                   </svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                     <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
                   </svg>
@@ -215,4 +239,4 @@ const HeroSection = () => {
   );
 };
 
-export default HeroSection;
+export default React.memo(HeroSection);

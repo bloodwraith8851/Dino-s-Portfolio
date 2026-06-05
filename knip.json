@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/App.tsx", "api/**/*.ts"],
+  "project": ["src/**/*.{ts,tsx}", "api/**/*.ts"],
+  "ignoreDependencies": ["@types/dompurify", "lint-staged"],
+  "ignore": [".husky/**"]
+}

@@ -17,7 +17,7 @@ let sentryInitialized = false;
  * If VITE_SENTRY_DSN is not set, errors are logged to console only.
  */
 export function initErrorReporting(): void {
-  const dsn = (import.meta as any).env?.VITE_SENTRY_DSN;
+  const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
   if (!dsn) {
     console.info('[errorReporting] No VITE_SENTRY_DSN set — errors will be logged to console only.');
     return;
@@ -35,15 +35,5 @@ export function captureError(error: Error, context?: ErrorContext): void {
   console.error(`[${context?.component ?? 'unknown'}]`, error.message, context);
   if (sentryInitialized) {
     // Sentry.captureException(error, { extra: context });
-  }
-}
-
-/**
- * Captures a message at the specified severity level.
- */
-export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info'): void {
-  console[level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'info'](`[reporting] ${message}`);
-  if (sentryInitialized) {
-    // Sentry.captureMessage(message, level);
   }
 }

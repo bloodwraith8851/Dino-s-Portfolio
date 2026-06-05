@@ -15,7 +15,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     let totalViews = 0;
-    
+
     // Fetch real views from Neon DB
     if (process.env.NEON_DATABASE_URL) {
       try {
@@ -49,13 +49,13 @@ export default async function handler(req: Request): Promise<Response> {
         cacheSize: cacheKeys,
         uptime,
         status: 'healthy',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }),
       {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      }
+      },
     );
-  } catch (err: any) {
+  } catch {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

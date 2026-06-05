@@ -191,7 +191,7 @@ export async function processCommand(
       else addLine({ type: 'output', text: ` <span class="t-red">Permission denied.</span>` });
       break;
     case 'motd': {
-      const motd = (window as any).__MOTD__ || 'Welcome to the Matrix.';
+      const motd = window.__MOTD__ ?? 'Welcome to the Matrix.';
       addLine({
         type: 'output',
         text: ` <span class="t-yellow font-bold">[MOTD]</span> <span class="t-dim">${motd}</span>`,

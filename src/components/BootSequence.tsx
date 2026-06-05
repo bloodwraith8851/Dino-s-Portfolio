@@ -24,7 +24,7 @@ const BOOT_LOGS = [
   '[    0.601234] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000',
   '[    0.704512] ata1.00: ATA-8: Amazon Elastic Block Store, 2.0, max UDMA/133',
   '[    0.801234] EXT4-fs (nvme0n1p1): mounted filesystem with ordered data mode',
-  '[    0.912345] systemd[1]: Inserted module \'autofs4\'',
+  "[    0.912345] systemd[1]: Inserted module 'autofs4'",
   '[    1.015678] systemd[1]: Starting systemd-udevd...',
   '[    1.124567] systemd[1]: Started Network Service.',
   '[    1.234512] Initializing RAKESH_DEV_PORTFOLIO_DAEMON...',
@@ -46,22 +46,22 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   useEffect(() => {
     let currentLine = 0;
     let timeoutId: NodeJS.Timeout;
-    
+
     const showNextLine = () => {
       if (currentLine >= BOOT_LOGS.length) {
         setIsFading(true);
         timeoutId = setTimeout(onComplete, 800);
         return;
       }
-      
-      setLines(prev => [...prev, BOOT_LOGS[currentLine] || '']);
+
+      setLines((prev) => [...prev, BOOT_LOGS[currentLine] || '']);
       currentLine++;
-      
+
       let delay = Math.random() * 110 + 10;
-      if (currentLine === 2) delay = 400; 
-      if (currentLine === 25) delay = 600; 
-      if (currentLine === BOOT_LOGS.length - 1) delay = 800; 
-      
+      if (currentLine === 2) delay = 400;
+      if (currentLine === 25) delay = 600;
+      if (currentLine === BOOT_LOGS.length - 1) delay = 800;
+
       timeoutId = setTimeout(showNextLine, delay);
     };
 
@@ -80,7 +80,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   }, [isFading, onComplete]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 1 }}
       animate={{ opacity: isFading ? 0 : 1 }}
       transition={{ duration: 0.5 }}
@@ -88,23 +88,30 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
     >
       <div className="flex-1 flex flex-col justify-end pointer-events-none">
         {lines.map((line, i) => (
-          <motion.div 
-            key={i} 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            key={i}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.1 }}
             className="mb-1"
           >
-            {line && typeof line === 'string' && line.includes('[ OK ]') ? (
-              <span dangerouslySetInnerHTML={{ __html: line.replace('[ OK ]', '[ <span class="text-[#00ff88]">OK</span> ]') }} />
-            ) : line}
+            {line && line.includes('[ OK ]') ? (
+              <span>
+                {line.replace('[ OK ]', '')}
+                {'[ '}
+                <span className="text-[#00ff88]">OK</span>
+                {' ]'}
+              </span>
+            ) : (
+              <span>{line}</span>
+            )}
           </motion.div>
         ))}
         {lines.length > 0 && lines.length < BOOT_LOGS.length && (
           <div className="h-5 w-2.5 bg-[#D7E2EA] mt-1 animate-pulse" />
         )}
       </div>
-      
+
       {!isFading && (
         <button
           onClick={onComplete}

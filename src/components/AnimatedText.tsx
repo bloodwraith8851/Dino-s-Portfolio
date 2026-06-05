@@ -48,31 +48,25 @@ const AnimatedText = ({ text, className, style }: AnimatedTextProps) => {
     offset: ['start 0.8', 'end 0.2'],
   });
 
-  // Split into words to preserve natural line-wrapping at word boundaries.
+  // Build word list with each word's starting character index pre-computed
   const words = text.split(' ');
   const totalChars = text.length;
-  let runningIndex = 0;
+  const wordOffsets = words.reduce<number[]>((acc, _, i) => {
+    const prev = i === 0 ? 0 : (acc[i - 1] ?? 0) + words[i - 1].length + 1;
+    acc.push(prev);
+    return acc;
+  }, []);
 
   return (
     <p ref={ref} className={className} style={style}>
       {words.map((word, wi) => {
         const wordChars = Array.from(word);
-        const wordStart = runningIndex;
-        runningIndex += wordChars.length + 1; // +1 accounts for the space after
+        const wordStart = wordOffsets[wi] ?? 0;
 
         return (
-          <span
-            key={wi}
-            style={{ display: 'inline-block', whiteSpace: 'nowrap' }}
-          >
+          <span key={wi} style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
             {wordChars.map((ch, ci) => (
-              <Char
-                key={ci}
-                char={ch}
-                index={wordStart + ci}
-                total={totalChars}
-                progress={scrollYProgress}
-              />
+              <Char key={ci} char={ch} index={wordStart + ci} total={totalChars} progress={scrollYProgress} />
             ))}
             {wi < words.length - 1 && '\u00A0'}
           </span>

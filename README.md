@@ -62,6 +62,82 @@ A cinematic, dark-themed developer portfolio featuring an interactive terminal i
      npx vercel dev
      ```
 
+## Development Commands
+
+We maintain a strict CI/CD pipeline and code quality standard. The following npm scripts are available:
+
+- `npm run dev` — Starts the Vite development server.
+- `npm run build` — Builds the production bundle (with rollup-plugin-visualizer analytics).
+- `npm run lint` — Runs ESLint to check for strict typing violations (configured for 0 warnings).
+- `npm run typecheck` — Runs the TypeScript compiler to strictly check types without emitting files.
+- `npm run test` — Runs the unit test suite using Vitest.
+- `npm run test:e2e` — Runs end-to-end browser tests using Playwright.
+- `npm run knip` — Runs dead-code analysis to find unused files, dependencies, and exports.
+- `npm run prepare` — Automatically installs Husky git hooks.
+
+## Terminal Commands
+
+The portfolio features a fully interactive custom terminal. Below is the complete list of supported commands you can execute in the terminal interface:
+
+### General & Contact
+- `help` — Opens the main help menu categorizing all commands.
+- `about` — Displays information about Rakesh.
+- `contact` — Shows email, phone, and direct contact details.
+- `social` — Lists external social media and professional links (LinkedIn, GitHub).
+- `skills` — Prints a matrix of technical skills and languages.
+- `hire` — Initiates the multi-step interactive wizard to send a secure job inquiry or message.
+- `clear` / `cls` — Clears the terminal screen.
+
+### Multiplayer & Interactive
+- `snake` — Launches an interactive, playable terminal Snake game.
+- `topscores` — Displays the global high-score leaderboard for the Snake game.
+- `map` — Opens a 3D WebGL globe plotting live global visitor locations.
+- `chat` — Connects to the real-time global multiplayer chat room.
+- `who` — Lists all currently active concurrent visitors on the site.
+- `sign [message]` — Carves a permanent signature into the public guestbook.
+- `guestbook` — Fetches and reads recent entries from the public guestbook.
+- `polls` — Views active community polls and current vote distributions.
+- `vote [poll_id] [option_id]` — Casts a live vote on an active community poll.
+- `echo [text]` — Prints text back to the terminal screen.
+- `calc [expression]` — Evaluates a mathematical expression.
+
+### System & Diagnostics
+- `neofetch` — Prints detailed system, host, and kernel information in a classic neofetch layout.
+- `status` — Pings the edge API to view server health, latency, and uptime metrics.
+- `stats` — Displays live dashboard metrics including database rows and cache size.
+- `commits` — Fetches and displays recent live deployment commits from GitHub.
+- `history` — Shows your local command execution history.
+- `time` / `date` — Displays the current system time and date.
+
+### Easter Eggs & Fun
+- `hack` — Triggers an elaborate, simulated ransomware / mainframe hacking sequence.
+- `matrix` — Enters the Matrix (dynamic green text raining simulation).
+- `github` — Fetches live GitHub profile stats and repository counts.
+- `crypto` — Fetches live cryptocurrency prices from CoinGecko.
+- `news` — Retrieves the top headlines from HackerNews.
+- `weather` — Checks the current real-world weather forecast based on IP geolocation.
+- `joke` — Tells a random programming joke.
+- `trivia` — Provides a random piece of tech trivia.
+- `quote` — Displays an inspirational tech or programming quote.
+- `pokemon` — Catches and displays a random Pokémon via the PokéAPI.
+- `coffee` — Brews a virtual cup of coffee.
+- `flip` — Flips a virtual table in frustration.
+- `sudo hire` — Triggers an Easter egg override of the hire flow.
+
+### Admin Tools
+*(Requires authentication via `su` or `admin` command)*
+- `stats` — Real-time traffic and analytics overview.
+- `logs` — Tails the live server event stream.
+- `watch` — Connects to the live global database feed via webhook.
+- `telemetry` — Views visitor command execution history.
+- `users` — Views detailed active connections.
+- `top` — Simulated task manager.
+- `deploy` — Triggers a simulated production build.
+- `config` — Views system configuration variables.
+- `set [key] [value]` — Updates global remote settings (e.g., MOTD).
+- `ban [ip]` — Blacklists an IP address from the terminal.
+- `logout` — Ends the active admin session.
+
 ## Environment Variables
 
 See \`.env.example\` for the full list. Key required variables include:
