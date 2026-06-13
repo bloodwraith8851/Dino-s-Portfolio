@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import App from './App';
 import './index.css';
 
@@ -9,5 +10,6 @@ if (!rootEl) throw new Error('#root element not found in DOM');
 createRoot(rootEl).render(
   <StrictMode>
     <App />
+    <SpeedInsights />
   </StrictMode>,
 );

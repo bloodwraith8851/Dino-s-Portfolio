@@ -20,6 +20,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@supabase/supabase-js": "^2.106.2",
     "@upstash/redis": "^1.38.0",
+    "@vercel/speed-insights": "^2.0.0",
     "framer-motion": "^12.38.0",
     "inngest": "^4.5.0",
     "jose": "^6.2.3",
