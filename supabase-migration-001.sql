@@ -25,11 +25,13 @@ CREATE TABLE IF NOT EXISTS public.projects (
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can read active projects
+DROP POLICY IF EXISTS "Anyone can read active projects" ON public.projects;
 CREATE POLICY "Anyone can read active projects"
   ON public.projects FOR SELECT
   USING (is_active = true);
 
 -- Only service role can manage projects
+DROP POLICY IF EXISTS "Service role can manage projects" ON public.projects;
 CREATE POLICY "Service role can manage projects"
   ON public.projects FOR ALL
   USING (auth.role() = 'service_role');
@@ -56,11 +58,13 @@ CREATE TABLE IF NOT EXISTS public.resume_downloads (
 ALTER TABLE public.resume_downloads ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can insert (the edge function uses anon key)
+DROP POLICY IF EXISTS "Edge function can log downloads" ON public.resume_downloads;
 CREATE POLICY "Edge function can log downloads"
   ON public.resume_downloads FOR INSERT
   WITH CHECK (true);
 
 -- Only service role can read download logs
+DROP POLICY IF EXISTS "Service role can read downloads" ON public.resume_downloads;
 CREATE POLICY "Service role can read downloads"
   ON public.resume_downloads FOR SELECT
   USING (auth.role() = 'service_role');
