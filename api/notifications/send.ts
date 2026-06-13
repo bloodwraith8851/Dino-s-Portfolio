@@ -1,25 +1,22 @@
-import { Redis } from '@upstash/redis/cloudflare';
+import { handlePreflight, json } from '../_lib/cors';
+import { getRedis, rateLimit } from '../_lib/redis';
 
 export const config = { runtime: 'edge' };
 
 const INNGEST_EVENT_KEY = process.env.INNGEST_EVENT_KEY ?? '';
 const INNGEST_API = 'https://inn.gs/e/';
 
-/** Maximum allowed lengths for user-provided fields */
+// Surface whether we are running in a real Vercel production deployment.
+const isProduction = process.env.VERCEL_ENV === 'production';
+
 const MAX_NAME_LENGTH = 500;
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_EMAIL_LENGTH = 254;
 
-/**
- * Strips HTML tags from a string to prevent injection.
- */
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>/g, '');
 }
 
-/**
- * Sanitizes and validates a string field. Returns the sanitized value or null if invalid.
- */
 function sanitizeField(value: unknown, maxLength: number): string | null {
   if (typeof value !== 'string') return null;
   const cleaned = stripHtml(value).trim();
@@ -42,43 +39,27 @@ async function sendInngestEvent(name: string, data: Record<string, any>) {
 }
 
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
+  // Handle CORS preflight via shared helper.
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
+    return json({ error: 'Method Not Allowed' }, 405);
   }
 
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
 
-    // Graceful check for Redis — if missing, bypass rate limit locally rather than 500
-    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    // Rate limiting via shared Redis helper — fails open on any Redis error.
+    const redis = getRedis();
+    if (redis) {
       try {
-        const redis = new Redis({
-          url: process.env.UPSTASH_REDIS_REST_URL,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        });
-
-        // Rate limit: max 3 notifications per IP per 5 minutes
-        const rateLimitKey = `notify:${ip}`;
-        const count = await redis.incr(rateLimitKey);
-        if (count === 1) await redis.expire(rateLimitKey, 300);
-        if (count > 3) {
-          return new Response(JSON.stringify({ error: 'Rate limit exceeded. Try again in 5 minutes.' }), {
-            status: 429,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-          });
+        const limited = await rateLimit(redis, `notify:${ip}`, 3, 300);
+        if (limited) {
+          return json({ error: 'Rate limit exceeded.' }, 429);
         }
       } catch (e) {
-        console.warn('Redis rate limiting failed, proceeding anyway', e);
+        console.warn('[notifications/send] Redis rate limiting failed:', e);
       }
     }
 
@@ -86,64 +67,48 @@ export default async function handler(req: Request): Promise<Response> {
     const { type, ...data } = body;
     const timestamp = new Date().toISOString();
 
+    // Validate notification type first so we fail fast with a clean 400.
     if (!type || !['guestbook', 'hire'].includes(type)) {
-      return new Response(JSON.stringify({ error: 'Invalid notification type' }), { status: 400 });
+      return json({ error: 'Invalid notification type' }, 400);
     }
 
-    // --- Input length validation & HTML sanitization ---
+    // Sanitize each expected field and collect any validation errors.
     const validationErrors: string[] = [];
-
     if (data.name !== undefined) {
-      const sanitized = sanitizeField(data.name, MAX_NAME_LENGTH);
-      if (sanitized === null) {
-        validationErrors.push(`name must be a string of at most ${MAX_NAME_LENGTH} characters`);
-      } else {
-        data.name = sanitized;
-      }
+      const s = sanitizeField(data.name, MAX_NAME_LENGTH);
+      if (s === null) validationErrors.push('invalid name');
+      else data.name = s;
     }
-
     if (data.message !== undefined) {
-      const sanitized = sanitizeField(data.message, MAX_MESSAGE_LENGTH);
-      if (sanitized === null) {
-        validationErrors.push(`message must be a string of at most ${MAX_MESSAGE_LENGTH} characters`);
-      } else {
-        data.message = sanitized;
-      }
+      const s = sanitizeField(data.message, MAX_MESSAGE_LENGTH);
+      if (s === null) validationErrors.push('invalid message');
+      else data.message = s;
     }
-
     if (data.email !== undefined) {
-      const sanitized = sanitizeField(data.email, MAX_EMAIL_LENGTH);
-      if (sanitized === null) {
-        validationErrors.push(`email must be a string of at most ${MAX_EMAIL_LENGTH} characters`);
-      } else {
-        data.email = sanitized;
-      }
+      const s = sanitizeField(data.email, MAX_EMAIL_LENGTH);
+      if (s === null) validationErrors.push('invalid email');
+      else data.email = s;
     }
 
     if (validationErrors.length > 0) {
-      return new Response(JSON.stringify({ error: 'Validation failed', details: validationErrors }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      });
+      return json({ error: 'Validation failed', details: validationErrors }, 400);
     }
 
-    // ONLY send to Inngest as requested by user
+    // Dispatch the appropriate Inngest event based on type.
     if (type === 'hire') {
       await sendInngestEvent('portfolio/hire.message', { ...data, ip, timestamp });
     } else if (type === 'guestbook') {
       await sendInngestEvent('portfolio/guestbook.signed', { ...data, ip, timestamp });
     }
 
-    return new Response(JSON.stringify({ ok: true, type, method: 'inngest' }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
-
+    return json({ ok: true, type, method: 'inngest' }, 200);
   } catch (err: any) {
-    console.error('[notifications/send] Error:', err);
-    // Even if it fails, return 200 so the client doesn't see a scary 500 in dev
-    return new Response(JSON.stringify({ ok: false, error: 'Silently caught' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('[notifications/send] Unhandled error:', err);
+
+    // In production we must surface a proper 500 so monitoring tools can alert.
+    // In development we mask it as 200 so local tooling (e.g. Next.js overlay)
+    // does not swallow the error body before the developer can read it.
+    const status = isProduction ? 500 : 200;
+    return json({ ok: false, error: 'Internal server error' }, status);
   }
 }

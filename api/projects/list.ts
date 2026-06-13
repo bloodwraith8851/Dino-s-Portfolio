@@ -1,79 +1,96 @@
-import { Redis } from '@upstash/redis/cloudflare';
+/**
+ * /api/projects/index.ts  →  GET /api/projects
+ *
+ * Public endpoint — returns the list of projects with their like counts.
+ * Project metadata is now sourced from Supabase `projects` table (single source of truth).
+ * Falls back to Redis cache (60s TTL) to keep edge response times fast.
+ */
+import { getRedis } from '../_lib/redis';
+import { handlePreflight, json } from '../_lib/cors';
 
 export const config = { runtime: 'edge' };
 
+const CACHE_KEY = 'projects:list:v2';
+const CACHE_TTL = 60;
+
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+  if (req.method === 'OPTIONS') return handlePreflight();
+  if (req.method !== 'GET') return json({ error: 'Method Not Allowed' }, 405);
+
+  const redis = getRedis();
+
+  // Serve from cache if available
+  if (redis) {
+    try {
+      const cached = await redis.get(CACHE_KEY);
+      if (cached) {
+        return json({ ok: true, data: cached, source: 'cache' }, 200, {
+          'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
+        });
+      }
+    } catch {
+      // Cache miss — fall through
+    }
+  }
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return json({ error: 'Database not configured' }, 503);
   }
 
   try {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
-
-    // Try to get cached project list from Redis
-    const CACHE_KEY = 'projects:list:v1';
-    const cached = await redis.get<string>(CACHE_KEY);
-
-    if (cached) {
-      return new Response(JSON.stringify({ ok: true, data: cached, source: 'cache' }), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=60',
-        },
-      });
-    }
-
-    // Fetch from Supabase
-    const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY!;
-
+    // Fetch projects with their like counts in one query via a join
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/project_likes?select=project_id,likes_count`,
+      `${supabaseUrl}/rest/v1/projects?select=id,slug,name,category,live_url,description,tech_stack,display_order&is_active=eq.true&order=display_order.asc`,
       {
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
         },
-      }
+      },
     );
 
-    const likesData = await res.json();
+    if (!res.ok) {
+      throw new Error(`Supabase projects fetch failed: ${res.status}`);
+    }
 
-    const projects = [
-      { number: '01', category: 'Personal', name: 'Forge', liveUrl: '#' },
-      { number: '02', category: 'Personal', name: 'LawLab', liveUrl: '#' },
-      { number: '03', category: 'Personal · GenAI', name: 'ResumeIQ', liveUrl: '#' },
-      { number: '04', category: 'Personal · Design', name: 'Notch', liveUrl: '#' },
-    ].map((p) => ({
-      ...p,
-      likes: likesData.find((l: any) => l.project_id === p.number)?.likes_count ?? 0,
-    }));
+    const projects = await res.json();
 
-    // Cache for 60 seconds
-    await redis.set(CACHE_KEY, projects, { ex: 60 });
-
-    return new Response(JSON.stringify({ ok: true, data: projects, source: 'db' }), {
+    // Fetch like counts
+    const likesRes = await fetch(`${supabaseUrl}/rest/v1/project_likes?select=project_id,likes_count`, {
       headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=60',
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
       },
     });
-  } catch (err: any) {
-    console.error('[projects/list] Error:', err);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+
+    const likesData = likesRes.ok ? await likesRes.json() : [];
+    const likesMap = Object.fromEntries(
+      likesData.map((l: { project_id: number; likes_count: number }) => [l.project_id, l.likes_count]),
+    );
+
+    const enriched = projects.map((p: { id: number; [key: string]: unknown }) => ({
+      ...p,
+      likes: likesMap[p.id] ?? 0,
+    }));
+
+    // Cache result
+    if (redis) {
+      try {
+        await redis.set(CACHE_KEY, enriched, { ex: CACHE_TTL });
+      } catch {
+        // Non-critical
+      }
+    }
+
+    return json({ ok: true, data: enriched, source: 'db' }, 200, {
+      'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
     });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[projects/list] Error:', message);
+    return json({ error: 'Failed to fetch projects' }, 500);
   }
 }

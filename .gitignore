@@ -10,3 +10,4 @@ dist-ssr
 .idea
 .agents
 .PRODUCT.md
+.coverage

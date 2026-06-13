@@ -3,6 +3,8 @@ import { inngest } from '../../src/inngest/client';
 import { notifyGuestbook } from '../../src/inngest/functions/notify-guestbook';
 import { notifyHire } from '../../src/inngest/functions/notify-hire';
 import { analyticsDigest } from '../../src/inngest/functions/analytics-digest';
+import { notifyResumeDownload } from '../../src/inngest/functions/notify-resume-download';
+import { staleMessageReminder } from '../../src/inngest/functions/stale-message-reminder';
 
 export const config = { runtime: 'edge' };
 
@@ -11,5 +13,11 @@ export const config = { runtime: 'edge' };
 // Do NOT destructure { GET, POST, PUT } — that pattern is Next.js App Router only.
 export default serve({
   client: inngest,
-  functions: [notifyGuestbook, notifyHire, analyticsDigest],
+  functions: [
+    notifyGuestbook,
+    notifyHire,
+    analyticsDigest,
+    notifyResumeDownload, // fires on every CV download → email alert
+    staleMessageReminder, // daily 9 AM IST → follow up on cold leads
+  ],
 });

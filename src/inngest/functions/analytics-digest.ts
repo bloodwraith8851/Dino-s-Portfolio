@@ -24,12 +24,16 @@ export const analyticsDigest = inngest.createFunction(
         SELECT count FROM page_views WHERE view_date = ${dateStr}
       `;
 
+      // Extract actual command names from metadata JSON (not event_type which is always 'command')
       const topCommands = await sql`
-        SELECT event_type, COUNT(*) as count
+        SELECT
+          metadata::json->>'command' AS command,
+          COUNT(*)::int AS count
         FROM analytics_events
-        WHERE created_at >= NOW() - INTERVAL '1 day'
-          AND event_type = 'command'
-        GROUP BY event_type
+        WHERE event_type = 'command'
+          AND created_at >= NOW() - INTERVAL '1 day'
+          AND metadata::json->>'command' IS NOT NULL
+        GROUP BY metadata::json->>'command'
         ORDER BY count DESC
         LIMIT 10
       `;
@@ -53,7 +57,10 @@ export const analyticsDigest = inngest.createFunction(
     // Step 2: Send digest email
     const { data, error } = await step.run('send-digest-email', async () => {
       const eventRows = stats.events
-        .map((e: any) => `<tr><td style="padding:8px 16px;color:#8ab4c4">${e.event_type}</td><td style="padding:8px 16px;color:#D7E2EA;text-align:right">${e.count}</td></tr>`)
+        .map(
+          (e: any) =>
+            `<tr><td style="padding:8px 16px;color:#8ab4c4">${e.event_type}</td><td style="padding:8px 16px;color:#D7E2EA;text-align:right">${e.count}</td></tr>`,
+        )
         .join('');
 
       return resend.emails.send({
@@ -119,5 +126,5 @@ export const analyticsDigest = inngest.createFunction(
     }
 
     return { success: true, date: stats.date, emailId: data?.id };
-  }
+  },
 );
