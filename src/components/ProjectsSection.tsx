@@ -178,23 +178,51 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
   );
 };
 
+const HARDCODED_PROJECTS: DbProject[] = [
+  {
+    id: 1,
+    slug: 'forge',
+    name: 'Forge',
+    category: 'Creative Studio',
+    live_url: '#',
+    description: 'Creative digital studio',
+    tech_stack: ['Next.js', 'Tailwind'],
+    likes: 142,
+  },
+  {
+    id: 2,
+    slug: 'lawlab',
+    name: 'LawLab',
+    category: 'Legal Tech',
+    live_url: '#',
+    description: 'Legal practice management',
+    tech_stack: ['React', 'Node.js'],
+    likes: 89,
+  },
+  {
+    id: 3,
+    slug: 'resumeiq',
+    name: 'ResumeIQ',
+    category: 'AI Analyzer',
+    live_url: '#',
+    description: 'AI resume analyzer',
+    tech_stack: ['React', 'OpenAI'],
+    likes: 256,
+  },
+  {
+    id: 4,
+    slug: 'notch',
+    name: 'Notch',
+    category: 'Design System',
+    live_url: '#',
+    description: 'Component library',
+    tech_stack: ['React', 'Framer Motion'],
+    likes: 75,
+  },
+];
+
 const ProjectsSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [projects, setProjects] = useState<DbProject[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const API_URL = import.meta.env.DEV ? 'http://localhost:5173' : '';
-    fetch(`${API_URL}/api/projects/list`)
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.ok && res.data) {
-          setProjects(res.data);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   return (
     <section
@@ -211,19 +239,15 @@ const ProjectsSection = () => {
       </FadeIn>
 
       <div ref={containerRef} className="mx-auto max-w-7xl min-h-[50vh]">
-        {loading ? (
-          <div className="flex justify-center items-center h-64 text-neutral-500 font-mono">Loading projects...</div>
-        ) : (
-          projects.map((project, i) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              index={i}
-              total={projects.length}
-              containerRef={containerRef}
-            />
-          ))
-        )}
+        {HARDCODED_PROJECTS.map((project, i) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            index={i}
+            total={HARDCODED_PROJECTS.length}
+            containerRef={containerRef}
+          />
+        ))}
       </div>
     </section>
   );
