@@ -84,6 +84,7 @@ export const HELP_INTERACTIVE = `
   <span class="t-cyan">polls</span>       <span class="t-dim">→</span> View community polls
   <span class="t-cyan">vote [p] [o]</span><span class="t-dim">→</span> Vote on a poll
   <span class="t-cyan">chat</span>        <span class="t-dim">→</span> Enter global live chat
+  <span class="t-cyan">dino</span>        <span class="t-dim">→</span> Talk to Dino AI (Gemini 2.0 Flash)
   <span class="t-cyan">who</span>         <span class="t-dim">→</span> View online visitors
   <span class="t-cyan">sign [msg]</span>  <span class="t-dim">→</span> Sign the public guestbook
   <span class="t-cyan">guestbook</span>   <span class="t-dim">→</span> Read the public guestbook
@@ -97,6 +98,7 @@ export const HELP_SYSTEM = `
   <span class="t-purple">status</span>      <span class="t-dim">→</span> View server health & latency
   <span class="t-purple">stats</span>       <span class="t-dim">→</span> Live dashboard metrics (DB & Cache)
   <span class="t-purple">commits</span>     <span class="t-dim">→</span> View live GitHub deployments
+  <span class="t-purple">resume</span>      <span class="t-dim">→</span> Download latest CV
   <span class="t-purple">neofetch</span>    <span class="t-dim">→</span> System info
   <span class="t-purple">history</span>     <span class="t-dim">→</span> Command history
   <span class="t-purple">time</span>        <span class="t-dim">→</span> Current time

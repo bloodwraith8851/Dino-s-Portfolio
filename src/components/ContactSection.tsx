@@ -22,6 +22,7 @@ import { useTerminalCore } from '../terminal/hooks/useTerminalCore';
 import { useAdminAuth } from '../terminal/hooks/useAdminAuth';
 import { useHireWizard } from '../terminal/hooks/useHireWizard';
 import { useChatMode } from '../terminal/hooks/useChatMode';
+import { useAiChatMode } from '../terminal/hooks/useAiChatMode';
 import { useRealtimeFeeds } from '../terminal/hooks/useRealtimeFeeds';
 
 export default function ContactSection() {
@@ -37,6 +38,7 @@ export default function ContactSection() {
   const auth = useAdminAuth(core.addLine);
   const hire = useHireWizard(core.addLine, supabase, visitorName);
   const chat = useChatMode(core.addLine, supabase, visitorName);
+  const aiChat = useAiChatMode(core.addLine);
   const feeds = useRealtimeFeeds(core.addLine, supabase);
 
   // Load visitor alias on mount
@@ -93,7 +95,13 @@ export default function ContactSection() {
         return;
       }
 
-      // 4. Standard command processing
+      // 4. AI Chat mode
+      if (aiChat.isAiChatMode) {
+        await aiChat.processAiChatInput(cmd);
+        return;
+      }
+
+      // 5. Standard command processing
       const isFirstTime = !localStorage.getItem('visitor_alias') && !core.isBooting;
 
       try {
@@ -114,6 +122,7 @@ export default function ContactSection() {
             initiateAuth: auth.initiateAuth,
             initiateHire: hire.initiateHire,
             enterChat: chat.enterChat,
+            enterAiChat: aiChat.enterAiChat,
             toggleLogs: feeds.toggleLogs,
             toggleWatch: feeds.toggleWatch,
             disableAllFeeds: feeds.disableAll,
@@ -130,7 +139,7 @@ export default function ContactSection() {
         console.error(err);
       }
     },
-    [core, auth, chat, hire, visitorName, isHelpMode, feeds],
+    [core, auth, chat, aiChat, hire, visitorName, isHelpMode, feeds],
   );
 
   // Key Handlers
@@ -147,6 +156,7 @@ export default function ContactSection() {
       core.addLine({ type: 'output', text: ` <span class="t-red">^C</span>` });
       if (hire.hireStep) hire.processHireInput('cancel');
       if (chat.isChatMode) chat.processChatInput('exit');
+      if (aiChat.isAiChatMode) aiChat.processAiChatInput('exit');
     } else if (e.ctrlKey && e.key === 'l') {
       e.preventDefault();
       core.clearLines();
@@ -232,6 +242,7 @@ export default function ContactSection() {
                       isAuth: !!auth.authStep,
                       isHire: !!hire.hireStep,
                       isChatMode: chat.isChatMode,
+                      isAiChatMode: aiChat.isAiChatMode,
                       alias: visitorName,
                       isFirstTime: !localStorage.getItem('visitor_alias'),
                       isAdmin: auth.isAdmin,

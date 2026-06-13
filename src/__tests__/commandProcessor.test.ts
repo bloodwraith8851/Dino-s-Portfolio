@@ -26,6 +26,7 @@ describe('processCommand', () => {
     initiateAuth: vi.fn(),
     initiateHire: vi.fn(),
     enterChat: vi.fn(),
+    enterAiChat: vi.fn(),
     toggleLogs: vi.fn(),
     toggleWatch: vi.fn(),
     disableAllFeeds: vi.fn(),

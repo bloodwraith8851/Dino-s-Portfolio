@@ -21,6 +21,7 @@ interface AppActions {
   initiateAuth: () => void;
   initiateHire: () => void;
   enterChat: () => void;
+  enterAiChat: () => void;
   toggleLogs: () => void;
   toggleWatch: (state?: boolean) => void;
   disableAllFeeds: () => void;
@@ -167,6 +168,10 @@ export async function processCommand(
     case 'chat':
       actions.enterChat();
       break;
+    case 'dino':
+    case 'ask':
+      actions.enterAiChat();
+      break;
     case 'snake':
       actions.setSnakeMode(true);
       break;
@@ -301,6 +306,10 @@ export async function processCommand(
       break;
     case 'github':
       fun.handleGithubStats(addLine);
+      break;
+    case 'resume':
+    case 'cv':
+      fun.handleResume(addLine);
       break;
     case 'crypto':
     case 'btc':

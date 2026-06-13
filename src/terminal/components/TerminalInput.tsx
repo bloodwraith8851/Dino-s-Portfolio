@@ -10,6 +10,7 @@ interface TerminalInputProps {
     isAuth: boolean;
     isHire: boolean;
     isChatMode: boolean;
+    isAiChatMode: boolean;
     alias: string;
     isFirstTime: boolean;
     isAdmin: boolean;
@@ -34,7 +35,7 @@ export function TerminalInput({ input, setInput, onEnter, onKeyDown, promptInfo,
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
-  const { isAuth, isHire, isChatMode, alias, isFirstTime, isAdmin } = promptInfo;
+  const { isAuth, isHire, isChatMode, isAiChatMode, alias, isFirstTime, isAdmin } = promptInfo;
 
   let prompt = '';
   let color = '';
@@ -47,6 +48,9 @@ export function TerminalInput({ input, setInput, onEnter, onKeyDown, promptInfo,
     color = 't-green';
   } else if (isHire) {
     prompt = 'hire@rakesh.dev';
+    color = 't-cyan';
+  } else if (isAiChatMode) {
+    prompt = 'dino@ai';
     color = 't-cyan';
   } else if (isChatMode) {
     prompt = 'global_chat';
@@ -68,19 +72,19 @@ export function TerminalInput({ input, setInput, onEnter, onKeyDown, promptInfo,
   return (
     <div className="flex w-full mt-2 relative items-center">
       <span className={`${color} mr-2`}>{prompt}</span>
-      <span className="t-purple mr-2">{isChatMode || isAdmin || isAuth ? '#' : '~'}</span>
+      <span className="t-purple mr-2">{isChatMode || isAiChatMode || isAdmin || isAuth ? '#' : '~'}</span>
       <span className="t-white font-bold">$&gt;</span>
-      
+
       <div className="relative flex-1 ml-2 flex items-center">
         <span className="t-white whitespace-pre absolute inset-y-0 left-0 flex items-center pointer-events-none">
           {isAuth ? '•'.repeat(input.length) : input}
           <motion.span
             animate={{ opacity: [1, 0] }}
-            transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
             className="inline-block w-2.5 h-4 bg-green-500 ml-1 translate-y-[2px]"
           />
         </span>
-        
+
         <input
           ref={inputRef}
           type="text"

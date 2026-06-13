@@ -4,57 +4,27 @@ import FadeIn from './FadeIn';
 import LiveProjectButton from './LiveProjectButton';
 import { supabase } from '../lib/supabase';
 
-interface ProjectData {
-  number: string;
-  category: string;
+// Map database project IDs to their respective images
+const PROJECT_IMAGES: Record<number, any> = {
+  1: { col1Image1: '/Forge.png', col1Image2: '/Forge1.png', col2Image: '/Forge2.png' },
+  2: { col1Image1: '/lawlab.png', col1Image2: '/lawlab1.png', col2Image: '/lawlab2.png' },
+  3: { col1Image1: '/resumeiq-hero.png', col1Image2: '/resumeiq-feedback.png', col2Image: '/resumeiq-score.png' },
+  4: { col1Image1: '/notch-hero.png', col1Image2: '/notch-pricing.png', col2Image: '/notch-mockup.png' },
+};
+
+interface DbProject {
+  id: number;
+  slug: string;
   name: string;
-  liveUrl: string;
-  col1Image1: string;
-  col1Image2: string;
-  col2Image: string;
+  category: string;
+  live_url: string;
+  description: string;
+  tech_stack: string[];
+  likes: number;
 }
 
-const PROJECTS: ProjectData[] = [
-  {
-    number: '01',
-    category: 'Personal',
-    name: 'Forge',
-    liveUrl: '#',
-    col1Image1: '/Forge.png',
-    col1Image2: '/Forge1.png',
-    col2Image: '/Forge2.png',
-  },
-  {
-    number: '02',
-    category: 'Personal',
-    name: 'LawLab',
-    liveUrl: '#',
-    col1Image1: '/lawlab.png',
-    col1Image2: '/lawlab1.png',
-    col2Image: '/lawlab2.png',
-  },
-  {
-    number: '03',
-    category: 'Personal · GenAI',
-    name: 'ResumeIQ',
-    liveUrl: '#',
-    col1Image1: '/resumeiq-hero.png',
-    col1Image2: '/resumeiq-feedback.png',
-    col2Image: '/resumeiq-score.png',
-  },
-  {
-    number: '04',
-    category: 'Personal · Design',
-    name: 'Notch',
-    liveUrl: '#',
-    col1Image1: '/notch-hero.png',
-    col1Image2: '/notch-pricing.png',
-    col2Image: '/notch-mockup.png',
-  },
-];
-
 interface ProjectCardProps {
-  project: ProjectData;
+  project: DbProject;
   index: number;
   total: number;
   containerRef?: React.RefObject<HTMLDivElement>;
@@ -62,25 +32,20 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [likes, setLikes] = useState(0);
+  const [likes, setLikes] = useState(project.likes);
 
   useEffect(() => {
-    // Initial fetch
-    supabase
-      .from('project_likes')
-      .select('likes_count')
-      .eq('project_id', project.number)
-      .single()
-      .then(({ data }) => {
-        if (data) setLikes(data.likes_count);
-      });
+    // Update local state if the initial prop changes
+    setLikes(project.likes);
+  }, [project.likes]);
 
-    // Realtime subscription
+  useEffect(() => {
+    // Realtime subscription for likes
     const channel = supabase
-      .channel(`likes_${project.number}`)
+      .channel(`likes_${project.id}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'project_likes', filter: `project_id=eq.${project.number}` },
+        { event: 'UPDATE', schema: 'public', table: 'project_likes', filter: `project_id=eq.${project.id}` },
         (payload) => {
           setLikes(payload.new.likes_count);
         },
@@ -90,16 +55,16 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [project.number]);
+  }, [project.id]);
 
   const handleLike = async () => {
     setLikes((l) => l + 1); // Optimistic UI
     try {
-      const API_URL = import.meta.env.DEV ? 'https://dino-s-portfolio.vercel.app' : '';
+      const API_URL = import.meta.env.DEV ? 'http://localhost:5173' : '';
       const res = await fetch(`${API_URL}/api/projects/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: project.number }),
+        body: JSON.stringify({ projectId: project.id }),
       });
       if (!res.ok) {
         await res.json();
@@ -113,16 +78,16 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
     }
   };
 
-  // Scroll progress for THIS card relative to the whole projects scroll range.
   const { scrollYProgress } = useScroll({
     target: cardRef,
     offset: ['start end', 'start start'],
   });
 
-  // Cards further down the stack stay full-size; earlier cards scale DOWN
-  // as later cards stack on top of them.
   const targetScale = 1 - (total - 1 - index) * 0.03;
   const scale = useTransform(scrollYProgress, [0, 1], [1, targetScale]);
+
+  const images = PROJECT_IMAGES[project.id] || PROJECT_IMAGES[1];
+  const numberStr = project.id.toString().padStart(2, '0');
 
   return (
     <div ref={cardRef} className="sticky top-24 md:top-32 h-[85vh] w-full" style={{ top: `${96 + index * 28}px` }}>
@@ -130,14 +95,13 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
         style={{ scale }}
         className="origin-top mx-auto h-full w-full flex flex-col gap-4 sm:gap-6 md:gap-8 rounded-[40px] sm:rounded-[50px] md:rounded-[60px] border-2 border-[#151515] bg-[#050505] p-4 sm:p-6 md:p-8"
       >
-        {/* Top row: number + meta + button */}
         <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 sm:gap-6">
           <div className="flex flex-row items-start gap-3 sm:gap-6 md:gap-10 min-w-0 w-full">
             <div
               className="shrink-0 font-black text-[#D7E2EA] leading-none"
               style={{ fontSize: 'clamp(2.5rem, 10vw, 140px)' }}
             >
-              {project.number}
+              {numberStr}
             </div>
 
             <div className="flex flex-col gap-1 sm:gap-3 pt-1 sm:pt-3 md:pt-4 min-w-0 flex-1">
@@ -164,20 +128,18 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
           </div>
 
           <div className="shrink-0 self-start sm:self-auto pt-1 sm:pt-2 md:pt-3 w-full sm:w-auto">
-            <LiveProjectButton href={project.liveUrl} className="w-full sm:w-auto" />
+            <LiveProjectButton href={project.live_url || '#'} className="w-full sm:w-auto" />
           </div>
         </div>
 
-        {/* Bottom row: two-column image grid */}
         <div className="grid grid-cols-[40%_60%] gap-3 sm:gap-4 md:gap-5 flex-1 min-h-0">
-          {/* Left column - 2 stacked */}
           <div className="flex flex-col gap-3 sm:gap-4 md:gap-5 min-h-0">
             <div
               className="overflow-hidden rounded-[40px] sm:rounded-[50px] md:rounded-[60px]"
               style={{ height: 'clamp(130px, 16vw, 230px)' }}
             >
               <img
-                src={project.col1Image1}
+                src={images.col1Image1}
                 alt={`${project.name} preview 1`}
                 className="h-full w-full object-cover"
                 loading="lazy"
@@ -190,7 +152,7 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
               style={{ height: 'clamp(160px, 22vw, 340px)' }}
             >
               <img
-                src={project.col1Image2}
+                src={images.col1Image2}
                 alt={`${project.name} preview 2`}
                 className="h-full w-full object-cover"
                 loading="lazy"
@@ -200,10 +162,9 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
             </div>
           </div>
 
-          {/* Right column - 1 tall */}
           <div className="overflow-hidden rounded-[40px] sm:rounded-[50px] md:rounded-[60px] min-h-0">
             <img
-              src={project.col2Image}
+              src={images.col2Image}
               alt={`${project.name} preview 3`}
               className="h-full w-full object-cover"
               loading="lazy"
@@ -219,6 +180,21 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
 
 const ProjectsSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [projects, setProjects] = useState<DbProject[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const API_URL = import.meta.env.DEV ? 'http://localhost:5173' : '';
+    fetch(`${API_URL}/api/projects/list`)
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.ok && res.data) {
+          setProjects(res.data);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   return (
     <section
@@ -234,16 +210,20 @@ const ProjectsSection = () => {
         </h2>
       </FadeIn>
 
-      <div ref={containerRef} className="mx-auto max-w-7xl">
-        {PROJECTS.map((project, i) => (
-          <ProjectCard
-            key={project.number}
-            project={project}
-            index={i}
-            total={PROJECTS.length}
-            containerRef={containerRef}
-          />
-        ))}
+      <div ref={containerRef} className="mx-auto max-w-7xl min-h-[50vh]">
+        {loading ? (
+          <div className="flex justify-center items-center h-64 text-neutral-500 font-mono">Loading projects...</div>
+        ) : (
+          projects.map((project, i) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              index={i}
+              total={projects.length}
+              containerRef={containerRef}
+            />
+          ))
+        )}
       </div>
     </section>
   );

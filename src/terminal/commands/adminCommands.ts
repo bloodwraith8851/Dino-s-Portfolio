@@ -116,13 +116,31 @@ export function handleConfig(addLine: AddLine) {
   });
 }
 
-export async function handleAdminStats(addLine: AddLine, supabase: any) {
+export async function handleAdminStats(addLine: AddLine, _supabase: any) {
   addLine({ type: 'output', text: ` <span class="t-dim">Fetching real-time database metrics...</span>` });
 
   let totalViews = 'N/A';
+  let todayViews = 'N/A';
+  let weekViews = 'N/A';
+  let activeKeys = 'N/A';
+
   try {
-    const { data } = await supabase.from('page_views').select('view_count').eq('id', 1).single();
-    if (data) totalViews = data.view_count.toString();
+    const API_URL = import.meta.env.DEV ? 'http://localhost:5173' : '';
+    // Use the admin JWT stored in window for fetch
+    const token = (window as any).__ADMIN_TOKEN__;
+
+    if (token) {
+      const res = await fetch(`${API_URL}/api/analytics/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        totalViews = data.pageViews.allTime.toString();
+        todayViews = data.pageViews.today.toString();
+        weekViews = data.pageViews.thisWeek.toString();
+        activeKeys = data.liveKeys.toString();
+      }
+    }
   } catch {
     /* ignore error */
   }
@@ -151,14 +169,14 @@ export async function handleAdminStats(addLine: AddLine, supabase: any) {
  <span class="t-purple">╠════════════════════════════════════════════════════╣</span>
 ${makeRow('Active Visitors ', activeVis.toString(), 't-green')}
 ${makeRow('Total Page Views', totalViews, 't-cyan')}
+${makeRow('Today Page Views', todayViews, 't-cyan')}
+${makeRow('Week Page Views ', weekViews, 't-cyan')}
+${makeRow('Redis Live Keys ', activeKeys, 't-green')}
 ${makeRow('Session Uptime  ', uptime, 't-cyan')}
 ${makeRow('Viewport Res    ', res, 't-green')}
 ${makeRow('Network Type    ', conn, 't-yellow')}
 ${makeRow('Device Memory   ', mem, 't-green')}
 ${makeRow('Logical Cores   ', cores.toString(), 't-cyan')}
-${makeRow('Browser Platform', navigator.platform || 'Unknown', 't-white')}
-${makeRow('System Language ', navigator.language, 't-dim')}
-${makeRow('Pixel Ratio     ', `${window.devicePixelRatio}x`, 't-yellow')}
  <span class="t-purple">╚════════════════════════════════════════════════════╝</span>`,
   });
 }
