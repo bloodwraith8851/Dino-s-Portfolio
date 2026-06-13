@@ -188,7 +188,7 @@ export function handlePokemon(addLine: AddLine) {
 export function handleGithubStats(addLine: AddLine) {
   addLine({ type: 'output', text: ` <span class="t-dim">Fetching GitHub stats from edge cache...</span>` });
   const API_URL = import.meta.env.DEV ? 'http://localhost:5173' : '';
-  fetch(`${API_URL}/api/github`)
+  fetch(`${API_URL}/api/github/stats`)
     .then((res) => res.json())
     .then((res) => {
       if (!res.ok) throw new Error(res.error);

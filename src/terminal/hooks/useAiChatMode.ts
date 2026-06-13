@@ -15,7 +15,7 @@ export function useAiChatMode(addLine: AddLine) {
     setIsAiChatMode(true);
     addLine({
       type: 'output',
-      text: ` <span class="t-dim">Connecting to Dino AI (Gemini 2.0 Flash)...</span>\\n <span class="t-green">✓ Connected. Ask me anything about Rakesh!</span>\\n <span class="t-dim">Type 'exit' or 'quit' to leave AI mode.</span>`,
+      text: ` <span class="t-dim">Connecting to Dino AI (Gemini 1.5 Flash)...</span>\\n <span class="t-green">✓ Connected. Ask me anything about Rakesh!</span>\\n <span class="t-dim">Type 'exit' or 'quit' to leave AI mode.</span>`,
     });
   };
 
