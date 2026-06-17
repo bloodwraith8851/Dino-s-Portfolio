@@ -16,11 +16,34 @@ const HeroSection = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [showSoundHint, setShowSoundHint] = useState(true);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   // Auto-hide "Tap for sound" hint after 5 seconds
   useEffect(() => {
     const t = setTimeout(() => setShowSoundHint(false), 5000);
     return () => clearTimeout(t);
+  }, []);
+
+  // Force play on mount — some browsers block autoplay until a user gesture
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    const playPromise = v.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Autoplay blocked — try again on first user interaction
+        const resume = () => {
+          v.play().catch(() => {});
+          document.removeEventListener('click', resume);
+          document.removeEventListener('touchstart', resume);
+          document.removeEventListener('keydown', resume);
+        };
+        document.addEventListener('click', resume, { once: true });
+        document.addEventListener('touchstart', resume, { once: true });
+        document.addEventListener('keydown', resume, { once: true });
+      });
+    }
   }, []);
 
   // Auto-mute video when scrolling past hero
@@ -90,6 +113,9 @@ const HeroSection = () => {
 
   return (
     <section ref={sectionRef} className="relative h-screen w-full overflow-hidden bg-black">
+      {/* Fallback gradient shown before video loads */}
+      {!videoLoaded && <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-black to-neutral-950" />}
+
       {/* Video background */}
       <video
         ref={videoRef}
@@ -98,7 +124,8 @@ const HeroSection = () => {
         loop
         playsInline
         preload="auto"
-        className="absolute inset-0 h-full w-full object-cover"
+        onCanPlay={() => setVideoLoaded(true)}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
       >
         <source src="/intro.mp4" type="video/mp4" />
       </video>
