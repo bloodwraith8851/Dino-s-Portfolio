@@ -137,42 +137,36 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-[40%_60%] gap-3 sm:gap-4 md:gap-5 flex-1 min-h-0">
-          <div className="flex flex-col gap-3 sm:gap-4 md:gap-5 min-h-0">
-            <div
-              className="overflow-hidden rounded-[40px] sm:rounded-[50px] md:rounded-[60px]"
-              style={{ height: 'clamp(130px, 16vw, 230px)' }}
-            >
+        <div className="grid grid-cols-[40%_60%] gap-3 sm:gap-4 md:gap-5" style={{ height: 'calc(85vh - 160px)' }}>
+          <div className="flex flex-col gap-3 sm:gap-4 md:gap-5 h-full">
+            <div className="overflow-hidden rounded-[24px] sm:rounded-[32px] md:rounded-[40px] flex-1">
               <img
                 src={project.images.col1Image1}
                 alt={`${project.name} preview 1`}
                 className="h-full w-full object-cover"
-                loading="lazy"
+                loading="eager"
                 decoding="async"
                 draggable={false}
               />
             </div>
-            <div
-              className="overflow-hidden rounded-[40px] sm:rounded-[50px] md:rounded-[60px]"
-              style={{ height: 'clamp(160px, 22vw, 340px)' }}
-            >
+            <div className="overflow-hidden rounded-[24px] sm:rounded-[32px] md:rounded-[40px] flex-[1.4]">
               <img
                 src={project.images.col1Image2}
                 alt={`${project.name} preview 2`}
                 className="h-full w-full object-cover"
-                loading="lazy"
+                loading="eager"
                 decoding="async"
                 draggable={false}
               />
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[40px] sm:rounded-[50px] md:rounded-[60px] min-h-0">
+          <div className="overflow-hidden rounded-[24px] sm:rounded-[32px] md:rounded-[40px] h-full">
             <img
               src={project.images.col2Image}
               alt={`${project.name} preview 3`}
               className="h-full w-full object-cover"
-              loading="lazy"
+              loading="eager"
               decoding="async"
               draggable={false}
             />
