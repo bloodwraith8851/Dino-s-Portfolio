@@ -157,6 +157,16 @@ img {
   100% { transform: translate(0) }
 }
 
+@keyframes scrollLine {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+
+@keyframes pulseFade {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -251,17 +251,6 @@ const HeroSection = () => {
           </FadeIn>
         </div>
       </div>
-
-      <style>{`
-        @keyframes scrollLine {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(200%); }
-        }
-        @keyframes pulseFade {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-      `}</style>
     </section>
   );
 };
