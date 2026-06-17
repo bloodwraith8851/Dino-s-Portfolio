@@ -1,81 +1,84 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import FadeIn from './FadeIn';
 import LiveProjectButton from './LiveProjectButton';
-import { supabase } from '../lib/supabase';
 
-// Map database project IDs to their respective images
-const PROJECT_IMAGES: Record<number, any> = {
-  1: { col1Image1: '/Forge.png', col1Image2: '/Forge1.png', col2Image: '/Forge2.png' },
-  2: { col1Image1: '/lawlab.png', col1Image2: '/lawlab1.png', col2Image: '/lawlab2.png' },
-  3: { col1Image1: '/resumeiq-hero.png', col1Image2: '/resumeiq-feedback.png', col2Image: '/resumeiq-score.png' },
-  4: { col1Image1: '/notch-hero.png', col1Image2: '/notch-pricing.png', col2Image: '/notch-mockup.png' },
-};
-
-interface DbProject {
+interface Project {
   id: number;
-  slug: string;
   name: string;
   category: string;
   live_url: string;
-  description: string;
-  tech_stack: string[];
-  likes: number;
+  images: { col1Image1: string; col1Image2: string; col2Image: string };
+  defaultLikes: number;
 }
 
+const PROJECTS: Project[] = [
+  {
+    id: 1,
+    name: 'Forge',
+    category: 'Creative Studio',
+    live_url: '#',
+    images: { col1Image1: '/Forge.png', col1Image2: '/Forge1.png', col2Image: '/Forge2.png' },
+    defaultLikes: 142,
+  },
+  {
+    id: 2,
+    name: 'LawLab',
+    category: 'Legal Tech',
+    live_url: '#',
+    images: { col1Image1: '/lawlab.png', col1Image2: '/lawlab1.png', col2Image: '/lawlab2.png' },
+    defaultLikes: 89,
+  },
+  {
+    id: 3,
+    name: 'ResumeIQ',
+    category: 'AI Analyzer',
+    live_url: '#',
+    images: {
+      col1Image1: '/resumeiq-hero.png',
+      col1Image2: '/resumeiq-feedback.png',
+      col2Image: '/resumeiq-score.png',
+    },
+    defaultLikes: 256,
+  },
+  {
+    id: 4,
+    name: 'Notch',
+    category: 'Design System',
+    live_url: '#',
+    images: { col1Image1: '/notch-hero.png', col1Image2: '/notch-pricing.png', col2Image: '/notch-mockup.png' },
+    defaultLikes: 75,
+  },
+];
+
 interface ProjectCardProps {
-  project: DbProject;
+  project: Project;
   index: number;
   total: number;
-  containerRef?: React.RefObject<HTMLDivElement>;
 }
 
 const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [likes, setLikes] = useState(project.likes);
+  const [likes, setLikes] = useState(project.defaultLikes);
+  const [liked, setLiked] = useState(false);
 
-  useEffect(() => {
-    // Update local state if the initial prop changes
-    setLikes(project.likes);
-  }, [project.likes]);
-
-  useEffect(() => {
-    // Realtime subscription for likes
-    const channel = supabase
-      .channel(`likes_${project.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'project_likes', filter: `project_id=eq.${project.id}` },
-        (payload) => {
-          setLikes(payload.new.likes_count);
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [project.id]);
-
-  const handleLike = async () => {
-    setLikes((l) => l + 1); // Optimistic UI
-    try {
-      const API_URL = import.meta.env.DEV ? 'http://localhost:5173' : '';
-      const res = await fetch(`${API_URL}/api/projects/like`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: project.id }),
-      });
-      if (!res.ok) {
-        await res.json();
-        if (res.status === 429) {
-          // Rate limited — revert optimistic update
-          setLikes((l) => Math.max(0, l - 1));
-        }
-      }
-    } catch {
-      setLikes((l) => Math.max(0, l - 1));
+  const handleLike = () => {
+    if (liked) {
+      setLikes((l) => l - 1);
+      setLiked(false);
+    } else {
+      setLikes((l) => l + 1);
+      setLiked(true);
     }
+    // Fire-and-forget to the API — no await, no blocking, no error shown to user
+    const API_URL = import.meta.env.DEV ? 'http://localhost:5173' : '';
+    fetch(`${API_URL}/api/projects/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: project.id }),
+    }).catch(() => {
+      /* silently ignore */
+    });
   };
 
   const { scrollYProgress } = useScroll({
@@ -85,8 +88,6 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
 
   const targetScale = 1 - (total - 1 - index) * 0.03;
   const scale = useTransform(scrollYProgress, [0, 1], [1, targetScale]);
-
-  const images = PROJECT_IMAGES[project.id] || PROJECT_IMAGES[1];
   const numberStr = project.id.toString().padStart(2, '0');
 
   return (
@@ -118,9 +119,13 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
                 {project.name}
                 <button
                   onClick={handleLike}
-                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-[#1A1A1A]/80 hover:bg-[#2A2A2A] transition-all duration-200 ease-out-custom active:scale-95 border border-[#333] px-3 py-1 sm:px-4 sm:py-1.5 rounded-full cursor-pointer group hover:border-blue-500/50"
+                  className={`flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-[#1A1A1A]/80 hover:bg-[#2A2A2A] transition-all duration-200 ease-out active:scale-95 border px-3 py-1 sm:px-4 sm:py-1.5 rounded-full cursor-pointer group ${liked ? 'border-blue-500/70' : 'border-[#333] hover:border-blue-500/50'}`}
                 >
-                  <span className="text-blue-500 group-hover:scale-125 transition-transform origin-center">💙</span>
+                  <span
+                    className={`transition-transform origin-center ${liked ? 'scale-125' : 'group-hover:scale-125'}`}
+                  >
+                    💙
+                  </span>
                   <span className="text-[#D7E2EA] font-mono tabular-nums">{likes}</span>
                 </button>
               </h3>
@@ -139,7 +144,7 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
               style={{ height: 'clamp(130px, 16vw, 230px)' }}
             >
               <img
-                src={images.col1Image1}
+                src={project.images.col1Image1}
                 alt={`${project.name} preview 1`}
                 className="h-full w-full object-cover"
                 loading="lazy"
@@ -152,7 +157,7 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
               style={{ height: 'clamp(160px, 22vw, 340px)' }}
             >
               <img
-                src={images.col1Image2}
+                src={project.images.col1Image2}
                 alt={`${project.name} preview 2`}
                 className="h-full w-full object-cover"
                 loading="lazy"
@@ -164,7 +169,7 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
 
           <div className="overflow-hidden rounded-[40px] sm:rounded-[50px] md:rounded-[60px] min-h-0">
             <img
-              src={images.col2Image}
+              src={project.images.col2Image}
               alt={`${project.name} preview 3`}
               className="h-full w-full object-cover"
               loading="lazy"
@@ -177,49 +182,6 @@ const ProjectCard = ({ project, index, total }: ProjectCardProps) => {
     </div>
   );
 };
-
-const HARDCODED_PROJECTS: DbProject[] = [
-  {
-    id: 1,
-    slug: 'forge',
-    name: 'Forge',
-    category: 'Creative Studio',
-    live_url: '#',
-    description: 'Creative digital studio',
-    tech_stack: ['Next.js', 'Tailwind'],
-    likes: 142,
-  },
-  {
-    id: 2,
-    slug: 'lawlab',
-    name: 'LawLab',
-    category: 'Legal Tech',
-    live_url: '#',
-    description: 'Legal practice management',
-    tech_stack: ['React', 'Node.js'],
-    likes: 89,
-  },
-  {
-    id: 3,
-    slug: 'resumeiq',
-    name: 'ResumeIQ',
-    category: 'AI Analyzer',
-    live_url: '#',
-    description: 'AI resume analyzer',
-    tech_stack: ['React', 'OpenAI'],
-    likes: 256,
-  },
-  {
-    id: 4,
-    slug: 'notch',
-    name: 'Notch',
-    category: 'Design System',
-    live_url: '#',
-    description: 'Component library',
-    tech_stack: ['React', 'Framer Motion'],
-    likes: 75,
-  },
-];
 
 const ProjectsSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -239,14 +201,8 @@ const ProjectsSection = () => {
       </FadeIn>
 
       <div ref={containerRef} className="mx-auto max-w-7xl min-h-[50vh]">
-        {HARDCODED_PROJECTS.map((project, i) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            index={i}
-            total={HARDCODED_PROJECTS.length}
-            containerRef={containerRef}
-          />
+        {PROJECTS.map((project, i) => (
+          <ProjectCard key={project.id} project={project} index={i} total={PROJECTS.length} />
         ))}
       </div>
     </section>
